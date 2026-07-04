@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Akkaunt Ochish — Forma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12241f;
+    --paper:#f7f5ef;
+    --panel:#ffffff;
+    --line:#dcd6c6;
+    --brand:#1f4d3f;
+    --brand-light:#2f6e59;
+    --accent:#c8791f;
+    --accent-soft:#f4e3cc;
+    --tg:#229ed9;
+    --error:#b3402c;
+    --muted:#6b7570;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,38px);
+    line-height:1.08;
+    margin:0 0 6px;
+    color:var(--brand);
+    border-bottom:2px solid var(--ink);
+    padding-bottom:16px;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.55;
+    margin:18px 0 24px;
+    max-width:52ch;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 24px;
+    margin-bottom:18px;
+    position:relative;
+  }
+  .card .idx{
+    position:absolute;
+    top:-11px;
+    left:22px;
+    background:var(--brand);
+    color:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    letter-spacing:0.04em;
+  }
+
+  label.field-label{
+    display:block;
+    font-weight:600;
+    font-size:15px;
+    margin-bottom:4px;
+    color:var(--ink);
+  }
+  .req{color:var(--accent);font-weight:700;margin-left:2px;}
+  .opt-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    background:#eee9db;
+    padding:2px 6px;
+    border-radius:4px;
+    margin-left:8px;
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+  .hint{font-size:12.5px;color:var(--muted);margin:2px 0 10px;}
+
+  input[type="text"], input[type="tel"]{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:15.5px;
+    padding:11px 13px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    background:#fdfcf9;
+    color:var(--ink);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus, input[type="tel"]:focus{
+    outline:none;
+    border-color:var(--brand-light);
+    box-shadow:0 0 0 3px rgba(47,110,89,0.14);
+  }
+  input::placeholder{color:#a9a296;font-style:italic;}
+
+  .choice-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;}
+  .choice{position:relative;}
+  .choice input{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;margin:0;cursor:pointer;}
+  .choice span{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:9px 16px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    font-size:14.5px;
+    font-weight:500;
+    background:#fdfcf9;
+    color:var(--ink);
+    transition:all .15s;
+    user-select:none;
+  }
+  .choice input:checked + span{
+    border-color:var(--brand);
+    background:var(--brand);
+    color:#fff;
+  }
+  .choice input:focus-visible + span{
+    box-shadow:0 0 0 3px rgba(47,110,89,0.25);
+  }
+
+  .logo-drop{
+    position:relative;
+    display:block;
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:18px;
+    text-align:center;
+    background:#fdfcf9;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    overflow:hidden;
+  }
+  .logo-drop:hover{border-color:var(--brand-light);}
+  .logo-drop.has-file{border-style:solid;border-color:var(--brand-light);}
+  .logo-drop input{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0;
+    cursor:pointer;
+    margin:0;
+  }
+  .logo-drop .ld-text{font-size:14px;color:var(--muted);}
+  .logo-drop .ld-filename{font-size:14px;color:var(--brand);font-weight:600;margin-top:4px;}
+  .logo-preview{
+    max-height:64px;
+    margin-bottom:8px;
+    border-radius:6px;
+  }
+
+  .err-msg{
+    display:none;
+    color:var(--error);
+    font-size:12.5px;
+    margin-top:6px;
+    font-weight:500;
+  }
+  .field.invalid .err-msg{display:block;}
+  .field.invalid input[type="text"], .field.invalid input[type="tel"]{border-color:var(--error);}
+
+  .submit-btn{
+    width:100%;
+    padding:16px;
+    background:var(--brand);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:0.01em;
+    transition:background .15s, transform .1s;
+  }
+  .submit-btn:hover{background:var(--brand-light);}
+  .submit-btn:active{transform:scale(0.995);}
+
+  .result{display:none;margin-top:24px;}
+  .result.show{display:block;}
+  .result .card{border-color:var(--brand);}
+  .result h2{font-family:'Fraunces',serif;font-size:20px;color:var(--brand);margin:0 0 4px;}
+  .result .sub2{font-size:13.5px;color:var(--muted);margin:0 0 16px;}
+  pre#output{
+    white-space:pre-wrap;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13.5px;
+    line-height:1.7;
+    background:#f2efe4;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px;
+    color:var(--ink);
+    margin:0 0 14px;
+  }
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .telegram-btn, .copy-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 18px;
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    text-decoration:none;
+    flex:1;
+    justify-content:center;
+  }
+  .telegram-btn{background:var(--tg);}
+  .telegram-btn:hover{opacity:0.92;}
+  .copy-btn{background:var(--accent);}
+  .copy-btn:hover{opacity:0.92;}
+  .copy-btn.copied{background:var(--brand);}
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:32px;
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:0.03em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Akkaunt ochish uchun ma'lumotlar</h1>
+  <p class="sub">Quyidagi maydonlarni to'ldiring. Yuborilgandan so'ng, bitta tugma bosish bilan ma'lumot to'g'ridan-to'g'ri Telegram orqali yetkaziladi.</p>
+
+  <form id="intakeForm" novalidate>
+
+    <div class="card field" data-field="brand">
+      <span class="idx">1</span>
+      <label class="field-label">Korxona yoki Brend nomi <span class="req">*</span></label>
+      <input type="text" name="brand" placeholder="Masalan: BITO ERP" required>
+      <div class="err-msg">Bu maydonni to'ldirish shart.</div>
+    </div>
+
+    <div class="card field" data-field="director">
+      <span class="idx">2</span>
+      <label class="field-label">Rahbar ism familiyasi <span class="req">*</span></label>
+      <input type="text" name="director" placeholder="Masalan: Uchqun Tulovov" required>
+      <div class="err-msg">Bu maydonni to'ldirish shart.</div>
+    </div>
+
+    <div class="card field" data-field="currency">
+      <span class="idx">3</span>
+      <label class="field-label">Asosiy valyuta <span class="req">*</span></label>
+      <div class="hint">Bir nechtasini tanlashingiz mumkin</div>
+      <div class="choice-row">
+        <label class="choice"><input type="checkbox" name="currency" value="So'm"><span>So'm</span></label>
+        <label class="choice"><input type="checkbox" name="currency" value="USD"><span>USD</span></label>
+      </div>
+      <div class="err-msg">Kamida bitta valyutani tanlang.</div>
+    </div>
+
+    <div class="card field" data-field="method">
+      <span class="idx">4</span>
+      <label class="field-label">Tannarx hisoblash usuli <span class="req">*</span></label>
+      <div class="hint">Faqat bittasini tanlang</div>
+      <div class="choice-row">
+        <label class="choice"><input type="radio" name="method" value="FIFO"><span>FIFO</span></label>
+        <label class="choice"><input type="radio" name="method" value="AVECO"><span>AVECO</span></label>
+        <label class="choice"><input type="radio" name="method" value="LIFO"><span>LIFO</span></label>
+      </div>
+      <div class="err-msg">Hisoblash usulini tanlang.</div>
+    </div>
+
+    <div class="card field" data-field="phone">
+      <span class="idx">5</span>
+      <label class="field-label">Telefon nomer <span class="req">*</span></label>
+      <input type="tel" name="phone" placeholder="Masalan: +998901234567" required>
+      <div class="err-msg">Telefon raqamini kiriting.</div>
+    </div>
+
+    <div class="card field" data-field="industry">
+      <span class="idx">6</span>
+      <label class="field-label">Qanday soha <span class="req">*</span></label>
+      <input type="text" name="industry" placeholder="Masalan: Mebel ishlab chiqarish" required>
+      <div class="err-msg">Bu maydonni to'ldirish shart.</div>
+    </div>
+
+    <div class="card field" data-field="location">
+      <span class="idx">7</span>
+      <label class="field-label">Joylashuvi <span class="req">*</span></label>
+      <input type="text" name="location" placeholder="Masalan: Toshkent shahar, Yakkasaroy tumani" required>
+      <div class="err-msg">Bu maydonni to'ldirish shart.</div>
+    </div>
+
+    <div class="card field" data-field="logo">
+      <span class="idx">8</span>
+      <label class="field-label">Korxona logotipi <span class="opt-tag">ixtiyoriy</span></label>
+      <label class="logo-drop" id="logoDrop">
+        <input type="file" name="logo" accept=".jpg,.jpeg,.png,.svg,.webp">
+        <img id="logoPreview" class="logo-preview" style="display:none;">
+        <div class="ld-text">Rasm yuklash uchun bosing (JPG, PNG, SVG)</div>
+        <div class="ld-filename" id="logoFilename"></div>
+      </label>
+    </div>
+
+    <div class="card field" data-field="inn">
+      <span class="idx">9</span>
+      <label class="field-label">Korxona INN <span class="opt-tag">ixtiyoriy</span></label>
+      <input type="text" name="inn" placeholder="Masalan: 123456789">
+    </div>
+
+    <button type="button" class="submit-btn" id="submitBtn">Ma'lumotlarni yuborish</button>
+  </form>
+
+  <div class="result" id="resultBlock">
+    <div class="card">
+      <h2>Tayyor</h2>
+      <p class="sub2">Quyidagi tugma orqali ma'lumotni to'g'ridan-to'g'ri Telegramga yuboring (Telegram ilovasi ochiladi, "Send" tugmasini bosish qoladi).</p>
+      <pre id="output"></pre>
+      <div class="btn-row">
+        <a class="telegram-btn" id="telegramBtn" href="#" target="_blank" rel="noopener">Telegramda yuborish</a>
+        <button type="button" class="copy-btn" id="copyBtn">Nusxalash</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>BITO ERP AKKAUNT SO'ROVNOMASI</footer>
+</div>
+
+<script>
+const TELEGRAM_USERNAME = "BitoManager";
+
+const form = document.getElementById('intakeForm');
+const logoDrop = document.getElementById('logoDrop');
+const logoInput = logoDrop.querySelector('input[type="file"]');
+const logoFilename = document.getElementById('logoFilename');
+const logoPreview = document.getElementById('logoPreview');
+
+logoInput.addEventListener('change', () => {
+  const file = logoInput.files[0];
+  if(file){
+    logoDrop.classList.add('has-file');
+    logoFilename.textContent = file.name;
+    if(file.type.startsWith('image/')){
+      const reader = new FileReader();
+      reader.onload = e => {
+        logoPreview.src = e.target.result;
+        logoPreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  } else {
+    logoDrop.classList.remove('has-file');
+    logoFilename.textContent = '';
+    logoPreview.style.display = 'none';
+  }
+});
+
+function clearFieldError(fieldEl){ fieldEl.classList.remove('invalid'); }
+function setFieldError(fieldEl){ fieldEl.classList.add('invalid'); }
+
+function handleSubmit(){
+  let valid = true;
+
+  const requiredText = ['brand','director','phone','industry','location'];
+  requiredText.forEach(name => {
+    const fieldEl = form.querySelector(`[data-field="${name}"]`);
+    const input = form.querySelector(`[name="${name}"]`);
+    if(!input.value.trim()){ setFieldError(fieldEl); valid = false; }
+    else { clearFieldError(fieldEl); }
+  });
+
+  const currencyChecks = form.querySelectorAll('[name="currency"]:checked');
+  const currencyField = form.querySelector('[data-field="currency"]');
+  if(currencyChecks.length === 0){ setFieldError(currencyField); valid = false; }
+  else { clearFieldError(currencyField); }
+
+  const methodCheck = form.querySelector('[name="method"]:checked');
+  const methodField = form.querySelector('[data-field="method"]');
+  if(!methodCheck){ setFieldError(methodField); valid = false; }
+  else { clearFieldError(methodField); }
+
+  if(!valid){
+    const firstInvalid = form.querySelector('.field.invalid');
+    if(firstInvalid) firstInvalid.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  const brand = form.brand.value.trim();
+  const director = form.director.value.trim();
+  const currencies = Array.from(currencyChecks).map(c => c.value).join(' va ');
+  const method = methodCheck.value;
+  const phone = form.phone.value.trim();
+  const industry = form.industry.value.trim();
+  const location = form.location.value.trim();
+  const logoFile = logoInput.files[0];
+  const logoText = logoFile ? `Bor (${logoFile.name})` : "Yo'q";
+  const inn = form.inn.value.trim() || "shartmas";
+
+  const output = `Korxona yoki Brend nomi: ${brand}
+Rahbar ism familyasi: ${director}
+Asosiy valyuta: ${currencies}
+Tannarx hisoblash usuli: ${method}
+Telefon nomer: ${phone}
+Qanday soha: ${industry}
+Joylashuvi: ${location}
+Korxona logotip: ${logoText}
+Korxona INN: ${inn}`;
+
+  document.getElementById('output').textContent = output;
+
+  const tgUrl = `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(output)}`;
+  document.getElementById('telegramBtn').href = tgUrl;
+
+  document.getElementById('resultBlock').classList.add('show');
+  document.getElementById('resultBlock').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+// Safety net: if a browser ever triggers native form submission (e.g. Enter key),
+// stop the page from reloading and run the same logic instead.
+form.addEventListener('submit', function(e){
+  e.preventDefault();
+  handleSubmit();
+});
+
+document.getElementById('copyBtn').addEventListener('click', function(){
+  const text = document.getElementById('output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    this.textContent = 'Nusxalandi ✓';
+    this.classList.add('copied');
+    setTimeout(() => { this.textContent = 'Nusxalash'; this.classList.remove('copied'); }, 1800);
+  });
+});
+</script>
+</body>
+</html>
