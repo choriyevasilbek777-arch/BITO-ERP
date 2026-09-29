@@ -250,6 +250,7 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ ret
 
 // ---------- status ----------
 function status(title, note, done, total, isErr){
+  if(!isErr) step = title.replace(/…$/,"");
   var el = $("status"); el.hidden = false; el.classList.toggle("err", !!isErr);
   $("stTitle").textContent = title;
   if(note!=null) $("stNote").textContent = note;
@@ -274,7 +275,7 @@ function unwrap(r){
   var p = parseMaybe(r.payload); if(p) return p;
   throw {code:"parse", message:"Bito javobini o'qib bo'lmadi"};
 }
-var truncatedSeen = false;
+var truncatedSeen = false, skipped = [], step = "";
 async function call(tool, input, cache){
   var attempt = 0;
   for(;;){
@@ -290,10 +291,20 @@ async function call(tool, input, cache){
   }
 }
 function listOf(r){ return Array.isArray(r) ? r : (r && (r.data || r.items)) || []; }
+var AUTHZ = {needs_reauth:1, server_not_connected:1, selection_required:1, not_in_manifest:1, consent_required:1, blocked_by_policy:1, approval_required:1, not_granted:1, capability_disabled:1, capability_removed:1, user_changed:1};
+function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+// Sahifalab olish. Javob juda katta bo'lsa yoki Bito ulgurmasa, sahifa hajmi yarmiga tushiriladi.
 async function allPages(tool, input, limit, onProgress, stop, cache){
-  var out = [], page = 1;
-  for(;page<=500;page++){
-    var r = await call(tool, Object.assign({}, input, {page:page, limit:limit}), cache);
+  var out = [];
+  for(var guard=0; guard<2000; guard++){
+    var page = Math.floor(out.length/limit)+1, r;
+    try{
+      r = await call(tool, Object.assign({}, input, {page:page, limit:limit}), cache);
+    }catch(e){
+      if(e && AUTHZ[e.code]) throw e;
+      if(limit>5 && out.length % Math.floor(limit/2) === 0){ limit = Math.floor(limit/2); await sleep(600); continue; }
+      throw e;
+    }
     var data = listOf(r);
     out.push.apply(out, data);
     var total = r && typeof r.total==="number" ? r.total : null;
@@ -357,7 +368,7 @@ async function loadProductSup(){
   var c = lsGet("prodsup");
   if(c && Date.now()-c.t < 6*3600e3) return c.m;
   var m = {};
-  await allPages("bito_product_get_paging", {}, 100, function(d,t){ status("Mahsulotlar ro'yxati…", null, d, t); }).then(function(list){
+  await allPages("bito_product_get_paging", {}, 50, function(d,t){ status("Mahsulotlar ro'yxati…", null, d, t); }).then(function(list){
     list.forEach(function(p){ if(p.supplier_ids && p.supplier_ids.length) m[p._id] = p.supplier_ids[0]; });
   });
   lsSet("prodsup", {t:Date.now(), m:m});
@@ -377,14 +388,22 @@ function compactPurchase(p){
   return {s:p.supplier_id || (p.supplier && p.supplier._id) || null, n:p.supplier && p.supplier.name, d:p.date || p.created_at, it:items};
 }
 async function loadPurchases(){
-  var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 100, function(d,t){ status("Kirim hujjatlari ro'yxati…", null, d, t); });
+  var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 50, function(d,t){ status("Kirim hujjatlari ro'yxati…", null, d, t); });
   list = list.filter(function(p){ return p.state==="done"; });
   var need = list.filter(function(p){ return !lsGet("p:"+p._id+":"+(p.updated_at||"")); });
   var done = list.length - need.length;
   status("Kirim hujjatlari tafsiloti…", need.length ? "Yangi kirimlar yuklanmoqda (keyingi safar saqlangandan olinadi)." : null, done, list.length);
-  await pool(need, 4, async function(p){
-    var full = await call("bito_purchase_get_by_id", {id:p._id});
-    lsSet("p:"+p._id+":"+(p.updated_at||""), compactPurchase(full));
+  await pool(need, 2, async function(p){
+    for(var a=0; a<2; a++){
+      try{
+        var full = await call("bito_purchase_get_by_id", {id:p._id});
+        lsSet("p:"+p._id+":"+(p.updated_at||""), compactPurchase(full));
+        break;
+      }catch(e){
+        if(e && AUTHZ[e.code]) throw e;
+        if(a===1){ skipped.push(p.number || p._id); } else await sleep(1500);
+      }
+    }
     done++; status("Kirim hujjatlari tafsiloti…", null, done, list.length);
   });
   return list.map(function(p){ var c = lsGet("p:"+p._id+":"+(p.updated_at||"")); if(c && !c.n && p.supplier) c.n = p.supplier.name; return c; }).filter(Boolean);
@@ -395,7 +414,7 @@ async function run(){
   if(!from || !to || from>to){ status("Sanalarni tekshiring", "Boshlanish sanasi tugash sanasidan oldin bo'lishi kerak.", 0, 0, true); return; }
   var org = $("org").value;
   lsSet("filters", {from:from, to:to, org:org, rate:$("rate").value});
-  $("run").disabled = true; truncatedSeen = false;
+  $("run").disabled = true; truncatedSeen = false; skipped = [];
   try{
     if(!REF) await loadRef();
     var rate = +$("rate").value || REF.rateMain;
@@ -417,7 +436,7 @@ async function run(){
       });
     });
 
-    var sales = await allPages("bito_report_sales_by_item_pagin", {from_date:fromISO, to_date:toISO, organization_ids: org?[org]:undefined}, 200,
+    var sales = await allPages("bito_report_sales_by_item_pagin", {from_date:fromISO, to_date:toISO, organization_ids: org?[org]:undefined}, 100,
       function(d,t){ status("Davrdagi sotuvlar…", null, d, t); });
 
     var S = {};
@@ -454,7 +473,7 @@ async function run(){
       return (+t.amount_in_main||0)/rate;
     }
     var nTx = 0;
-    await allPages("bito_transaction_get_paging", {sort:"-date"}, 50,
+    await allPages("bito_transaction_get_paging", {sort:"-date"}, 20,
       function(d){ nTx = d; status("Chiqim tranzaksiyalari…", "Davr boshigacha bo'lgan tranzaksiyalar ko'rib chiqilmoqda.", 0, 0); $("stCount").textContent = d+" ta ko'rildi"; },
       function(page){
         page.forEach(function(t){
@@ -477,11 +496,12 @@ async function run(){
     var rows = Object.keys(S).map(function(k){ return S[k]; }).filter(function(o){ return Math.abs(o.sold)>0.5 || Math.abs(o.paid)>0.5; });
     last = {rows:rows, from:from, to:to, rate:rate, orgName: org ? $("org").selectedOptions[0].textContent : "Barcha filiallar", nTx:nTx};
     render();
-    var warn = truncatedSeen ? " Diqqat: Bito ba'zi javoblarni qisqartirdi, natija to'liq bo'lmasligi mumkin." : "";
+    var warn = (skipped.length ? " "+skipped.length+" ta kirim hujjati yuklanmadi ("+skipped.slice(0,5).join(", ")+(skipped.length>5?"…":"")+"), ularning mahsulotlari Bito tannarxi bilan hisoblandi. Qayta \"Hisoblash\" bosilsa, yana urinib ko'riladi." : "") + (truncatedSeen ? " Diqqat: Bito ba'zi javoblarni qisqartirdi, natija to'liq bo'lmasligi mumkin." : "");
     status("Tayyor", "Kurs: 1$ = "+nf0.format(rate)+" so'm. "+rows.length+" ta ta'minotchi."+warn, 1, 1);
     $("stCount").textContent = "";
   }catch(e){
-    var t = errText(e); status(t[0], t[1], 0, 0, true);
+    var t = errText(e), at = step;
+    status(t[0], "Bosqich: "+(at||"boshlanish")+". "+t[1]+(e && e.code ? " (kod: "+e.code+")" : ""), 0, 0, true);
   }finally{
     $("run").disabled = false;
   }
