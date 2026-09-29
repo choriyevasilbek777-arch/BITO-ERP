@@ -38,6 +38,8 @@ header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:fle
 .chip{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
 .chip:hover{border-color:var(--accent)}
 .btn{font:inherit;font-weight:600;border:0;border-radius:7px;padding:9px 16px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip[disabled]{opacity:.5;cursor:progress}
 .btn[disabled]{opacity:.5;cursor:progress}
 button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
@@ -141,13 +143,13 @@ tfoot td{font-weight:700;border-bottom:0;background:var(--bg)}
         <button type="button" class="chip" data-p="year">Bu yil</button>
       </div>
     </div>
-    <button class="btn" id="run" type="submit">Hisoblash</button>
+    <div class="actions"><button class="btn" id="run" type="submit">Hisoblash</button><button class="chip" id="resync" type="button" title="Tanlangan davrdagi chiqimlarni Bitodan qaytadan o'qiydi">Chiqimlarni qayta tekshirish</button></div>
   </form>
 
   <section class="status" id="status" aria-live="polite">
     <div class="row"><strong id="stTitle">Bito bilan ulanmoqda…</strong><span class="muted num" id="stCount"></span></div>
     <div class="pbar"><i id="stBar"></i></div>
-    <div class="note" id="stNote">Birinchi ochilishda Bito connectoriga ruxsat so'raladi. Kirim hujjatlari bir marta yuklanadi va brauzerda saqlanadi, keyingi hisoblashlar tezroq bo'ladi.</div>
+    <div class="note" id="stNote">Birinchi ochilishda Bito connectoriga ruxsat so'raladi. Kirim hujjatlari va to'lovlar bir marta olinadi va dashboard bazasida saqlanadi — keyingi hisoblashlarda faqat yangilari o'qiladi.</div>
   </section>
 
   <section class="hero" id="hero" hidden>
@@ -293,26 +295,34 @@ async function call(tool, input, cache){
 function listOf(r){ return Array.isArray(r) ? r : (r && (r.data || r.items)) || []; }
 var AUTHZ = {needs_reauth:1, server_not_connected:1, selection_required:1, not_in_manifest:1, consent_required:1, blocked_by_policy:1, approval_required:1, not_granted:1, capability_disabled:1, capability_removed:1, user_changed:1};
 function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
-// Sahifalab olish. Javob juda katta bo'lsa yoki Bito ulgurmasa, sahifa hajmi yarmiga tushiriladi.
-async function allPages(tool, input, limit, onProgress, stop, cache){
-  var out = [];
-  for(var guard=0; guard<2000; guard++){
-    var page = Math.floor(out.length/limit)+1, r;
+// Sahifalab o'qish. Javob juda katta bo'lsa yoki Bito ulgurmasa, sahifa hajmi kichraytiriladi (20 → 10 → 5).
+async function scan(tool, input, startOffset, limit, onPage, cache){
+  var off = startOffset, total = null;
+  for(var g=0; g<5000; g++){
+    var page = Math.floor(off/limit)+1, r, fails = 0;
     try{
       r = await call(tool, Object.assign({}, input, {page:page, limit:limit}), cache);
     }catch(e){
       if(e && AUTHZ[e.code]) throw e;
-      if(limit>5 && out.length % Math.floor(limit/2) === 0){ limit = Math.floor(limit/2); await sleep(600); continue; }
+      if(limit>5 && off % Math.floor(limit/2) === 0){ limit = Math.floor(limit/2); await sleep(800); continue; }
       throw e;
     }
     var data = listOf(r);
-    out.push.apply(out, data);
-    var total = r && typeof r.total==="number" ? r.total : null;
-    if(onProgress) onProgress(out.length, total);
+    off = (page-1)*limit + data.length;
+    total = r && typeof r.total==="number" ? r.total : total;
     if(!data.length) break;
-    if(stop && stop(data)) break;
-    if(total!=null ? out.length>=total : data.length<limit) break;
+    if(await onPage(data, off, total)) break;
+    if(total!=null ? off>=total : data.length<limit) break;
   }
+  return {off:off, total:total};
+}
+async function allPages(tool, input, limit, onProgress, stop, cache){
+  var out = [];
+  await scan(tool, input, 0, limit, function(data, off, total){
+    out.push.apply(out, data);
+    if(onProgress) onProgress(out.length, total);
+    return stop ? stop(data) : false;
+  }, cache);
   return out;
 }
 async function pool(items, n, fn){
@@ -337,6 +347,26 @@ function errText(e){
 // ---------- ma'lumot ----------
 var REF = null; // valyuta, filiallar, ta'minotchilar
 var last = null; // oxirgi hisob natijasi
+var db = null, dbWarn = false;
+var MEM = {pay:{}, meta:null}; // baza bo'lmasa, sahifa ochiq turganda saqlanadi
+
+// Dashboard bazasi: bir marta olingan kirim va to'lovlar shu yerda saqlanadi
+async function dbGet(path){
+  if(!db) return null;
+  try{ var s = await db.doc(path).get(); return s.exists ? s.data() : null; }catch(e){ dbWarn = true; return null; }
+}
+async function dbSet(path, data){
+  if(!db) return;
+  try{ await db.doc(path).set(data); }catch(e){ dbWarn = true; }
+}
+async function dbMerge(path, data){
+  if(!db) return;
+  try{ await db.doc(path).update(data); }
+  catch(e){
+    if(e && e.code==="invalid_argument"){ try{ await db.doc(path).set(data); }catch(e2){ dbWarn = true; } }
+    else dbWarn = true;
+  }
+}
 
 async function loadRef(){
   status("Ma'lumotnomalar yuklanmoqda…", null);
@@ -363,19 +393,19 @@ async function loadRef(){
   REF = {usdId:usdC._id, mainId:mainC?mainC._id:null, toUSD:toUSD, rateMain:rateMain, supName:supName};
 }
 
-// Mahsulot → ta'minotchi (kartochkadan), 6 soat saqlanadi
+// Mahsulot → ta'minotchi (kartochkadan). Faqat kirimi topilmagan mahsulotlar uchun kerak; 3 kun saqlanadi.
 async function loadProductSup(){
-  var c = lsGet("prodsup");
-  if(c && Date.now()-c.t < 6*3600e3) return c.m;
+  var c = (await dbGet("meta/prodsup")) || lsGet("prodsup");
+  if(c && c.m && Date.now()-c.t < 3*864e5) return c.m;
   var m = {};
-  await allPages("bito_product_get_paging", {}, 50, function(d,t){ status("Mahsulotlar ro'yxati…", null, d, t); }).then(function(list){
-    list.forEach(function(p){ if(p.supplier_ids && p.supplier_ids.length) m[p._id] = p.supplier_ids[0]; });
-  });
-  lsSet("prodsup", {t:Date.now(), m:m});
+  var list = await allPages("bito_product_get_paging", {}, 50, function(d,t){ status("Mahsulotlar ro'yxati (3 kunda bir marta)…", null, d, t); });
+  list.forEach(function(p){ if(p.supplier_ids && p.supplier_ids.length) m[p._id] = p.supplier_ids[0]; });
+  var body = {t:Date.now(), m:m};
+  await dbSet("meta/prodsup", body); lsSet("prodsup", body);
   return m;
 }
 
-// Kirimlar: har biri bir marta olinadi va ixcham ko'rinishda saqlanadi
+// Kirimlar: har biri bir marta olinadi va bazada ixcham ko'rinishda saqlanadi
 function compactPurchase(p){
   var f = REF.toUSD[p.currency_id || (p.currency && p.currency._id)];
   if(f==null) f = REF.rateMain ? 1/REF.rateMain : 0;
@@ -383,45 +413,165 @@ function compactPurchase(p){
   (p.orders||[]).forEach(function(o){ (o.products||[]).forEach(function(it){
     var q = (+it.amount||0) - (+it.refunded_amount||0);
     if(q<=0) return;
-    items.push([it.product_id || it._id, q, (+it.cost||0)*f, (+it.extra_cost||0)*f]);
+    items.push({p:it.product_id || it._id, q:q, c:(+it.cost||0)*f, e:(+it.extra_cost||0)*f});
   }); });
-  return {s:p.supplier_id || (p.supplier && p.supplier._id) || null, n:p.supplier && p.supplier.name, d:p.date || p.created_at, it:items};
+  return {u:p.updated_at||"", s:p.supplier_id || (p.supplier && p.supplier._id) || null, n:(p.supplier && p.supplier.name) || "", d:p.date || p.created_at, it:items};
+}
+function legacyPurchase(id, upd){
+  var c = lsGet("p:"+id+":"+upd);
+  if(!c) return null;
+  return {u:upd, s:c.s, n:c.n||"", d:c.d, it:(c.it||[]).map(function(x){ return Array.isArray(x) ? {p:x[0], q:x[1], c:x[2], e:x[3]} : x; })};
 }
 async function loadPurchases(){
-  var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 50, function(d,t){ status("Kirim hujjatlari ro'yxati…", null, d, t); });
-  list = list.filter(function(p){ return p.state==="done"; });
-  var need = list.filter(function(p){ return !lsGet("p:"+p._id+":"+(p.updated_at||"")); });
-  var done = list.length - need.length;
-  status("Kirim hujjatlari tafsiloti…", need.length ? "Yangi kirimlar yuklanmoqda (keyingi safar saqlangandan olinadi)." : null, done, list.length);
+  var known = {};
+  if(db){
+    try{ var snap = await db.collection("purch").limit(1000).get(); snap.docs.forEach(function(d){ known[d.id] = d.data(); }); }
+    catch(e){ dbWarn = true; }
+  }
+  var hasKnown = Object.keys(known).length > 0;
+  // Yangi yoki o'zgargan kirimlargacha o'qiladi; butun sahifa tanish bo'lsa, to'xtaydi
+  var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 50,
+    function(d,t){ status("Kirim hujjatlari ro'yxati…", null, d, t); },
+    function(page){ return hasKnown && page.every(function(p){ var k = known[p._id]; return p.state!=="done" ? !k : (k && k.u===(p.updated_at||"")); }); });
+  var need = [];
+  for(var i=0;i<list.length;i++){
+    var p = list[i], k = known[p._id];
+    if(p.state!=="done"){ if(k){ delete known[p._id]; if(db) try{ await db.doc("purch/"+p._id).delete(); }catch(e){} } continue; }
+    if(k && k.u===(p.updated_at||"")) continue;
+    var old = legacyPurchase(p._id, p.updated_at||"");
+    if(old){ known[p._id] = old; await dbSet("purch/"+p._id, old); continue; }
+    need.push(p);
+  }
+  var done = 0;
+  if(need.length) status("Kirim hujjatlari tafsiloti…", "Yangi kirimlar yuklanmoqda. Har bir kirim bir marta olinadi va saqlanadi — to'xtab qolsa ham, keyingi safar davom etadi.", 0, need.length);
   await pool(need, 2, async function(p){
-    for(var a=0; a<2; a++){
+    for(var a=0; a<3; a++){
       try{
         var full = await call("bito_purchase_get_by_id", {id:p._id});
-        lsSet("p:"+p._id+":"+(p.updated_at||""), compactPurchase(full));
+        var c = compactPurchase(full);
+        if(!c.n && p.supplier) c.n = p.supplier.name;
+        known[p._id] = c;
+        await dbSet("purch/"+p._id, c);
+        if(!db) lsSet("p:"+p._id+":"+c.u, c);
         break;
       }catch(e){
         if(e && AUTHZ[e.code]) throw e;
-        if(a===1){ skipped.push(p.number || p._id); } else await sleep(1500);
+        if(a===2){ skipped.push(p.number || p._id); } else await sleep(1500*(a+1));
       }
     }
-    done++; status("Kirim hujjatlari tafsiloti…", null, done, list.length);
+    done++; status("Kirim hujjatlari tafsiloti…", null, done, need.length);
   });
-  return list.map(function(p){ var c = lsGet("p:"+p._id+":"+(p.updated_at||"")); if(c && !c.n && p.supplier) c.n = p.supplier.name; return c; }).filter(Boolean);
+  return Object.keys(known).map(function(id){ return known[id]; });
 }
 
-async function run(){
+// ---------- ta'minotchilarga chiqimlar (tranzaksiyalar) ----------
+function monthKey(t){ var d = new Date(t + 5*3600e3); return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1); }
+function txDate(t){ return new Date(t.date || t.created_at).getTime(); }
+function payUSD(t, rate){
+  var usdId = REF.usdId;
+  var cid = t.currency && t.currency._id || t.currency_id;
+  if(cid===usdId) return +t.amount||0;
+  var bc = (t.balance_changes||[]).filter(function(b){ return b.currency_id===usdId; });
+  if(bc.length) return bc.reduce(function(a,b){ return a+(+b.amount||0); }, 0);
+  if(cid && REF.toUSD[cid] && cid!==REF.mainId) return (+t.amount||0)*REF.toUSD[cid];
+  return (+t.amount_in_main||0)/rate;
+}
+function payRecord(t, rate){
+  return {d:t.date||t.created_at, n:t.number||"", s:t.supplier_id || (t.supplier && t.supplier._id) || "_none", sn:(t.supplier && t.supplier.name)||"",
+    o:t.organization_id||"", st:(t.is_deleted ? "deleted" : (t.state||"done")), v:payUSD(t, rate), raw:+t.amount||0,
+    cur:(t.currency && t.currency.name)||"", type:(t.payment_type && t.payment_type.name)||""};
+}
+async function savePays(recs){
+  var byM = {};
+  Object.keys(recs).forEach(function(id){ var r = recs[id]; var m = monthKey(new Date(r.d).getTime()); (byM[m] || (byM[m] = {}))[id] = r; });
+  for(var m in byM){
+    var mm = MEM.pay[m] || (MEM.pay[m] = {}); Object.assign(mm, byM[m]);
+    await dbMerge("pay/"+m, {items:byM[m]});
+  }
+}
+async function loadMeta(){ var m = db ? await dbGet("meta/tx") : MEM.meta; return m && typeof m.hi==="number" && m.hi>0 ? m : null; }
+async function saveMeta(m){ MEM.meta = m; await dbSet("meta/tx", m || {reset:Date.now()}); }
+
+// Bito'dan faqat yetishmayotgan tranzaksiyalar o'qiladi: yangilari (tepadan) va davr boshigacha bo'lgan eski qismi
+async function syncPayments(fromT, rate){
+  var TX = "bito_transaction_get_paging", IN = {sort:"-date"}, L = 20;
+  var meta = await loadMeta();
+  var newest = meta ? meta.hi : 0, oldest = meta ? meta.lo : Infinity, seen = 0;
+  function handle(page){
+    var recs = {};
+    page.forEach(function(t){
+      var tt = txDate(t);
+      if(tt>newest) newest = tt;
+      if(tt<oldest) oldest = tt;
+      if(t.type==="expense" && t.to_supplier==="expense") recs[t._id] = payRecord(t, rate);
+    });
+    seen += page.length;
+    status("Chiqim tranzaksiyalari…", meta ? "Oxirgi tekshiruvdan keyingi yangi tranzaksiyalar o'qilmoqda." : "Birinchi marta: davr boshigacha bo'lgan tranzaksiyalar ko'rib chiqilmoqda. Bu bir marta bo'ladi.", 0, 0);
+    $("stCount").textContent = seen+" ta ko'rildi";
+    return recs;
+  }
+  function lastDate(page){ return txDate(page[page.length-1]); }
+
+  if(!meta){
+    var total0 = null;
+    await scan(TX, IN, 0, L, async function(page, off, total){
+      total0 = total;
+      await savePays(handle(page));
+      await saveMeta({hi:newest, lo:oldest, scanned:off, total:total});
+      return lastDate(page) < fromT;
+    });
+    return;
+  }
+  // 1) yangilari: oxirgi tekshiruvdan 3 kun oldingacha (tahrir qilinganlar ham yangilanadi)
+  var cutoff = meta.hi - 3*864e5, T = meta.total;
+  await scan(TX, IN, 0, L, async function(page, off, total){
+    T = total;
+    await savePays(handle(page));
+    return lastDate(page) < cutoff;
+  });
+  var scanned = meta.scanned + Math.max(0, (T||meta.total) - meta.total);
+  meta = {hi:newest, lo:Math.min(meta.lo, oldest), scanned:scanned, total:T||meta.total};
+  await saveMeta(meta);
+  // 2) eski qismi: davr boshi hali qamrab olinmagan bo'lsa, to'xtagan joydan davom etadi
+  if(fromT < meta.lo){
+    var start = Math.max(0, Math.floor((meta.scanned - L)/L)*L);
+    await scan(TX, IN, start, L, async function(page, off, total){
+      await savePays(handle(page));
+      meta = {hi:Math.max(meta.hi, newest), lo:Math.min(meta.lo, oldest), scanned:off, total:total};
+      await saveMeta(meta);
+      return lastDate(page) < fromT;
+    });
+  }
+}
+async function loadPays(fromT, toT){
+  var out = {}, d = new Date(fromT + 5*3600e3), end = monthKey(toT), guard = 0;
+  d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+  for(;guard<120;guard++){
+    var m = d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1);
+    var doc = db ? await dbGet("pay/"+m) : null;
+    var items = (doc && doc.items) || MEM.pay[m] || {};
+    Object.keys(items).forEach(function(id){ out[id] = items[id]; });
+    if(m===end) break;
+    d.setUTCMonth(d.getUTCMonth()+1);
+  }
+  return out;
+}
+
+async function run(opts){
   var from = $("from").value, to = $("to").value;
   if(!from || !to || from>to){ status("Sanalarni tekshiring", "Boshlanish sanasi tugash sanasidan oldin bo'lishi kerak.", 0, 0, true); return; }
   var org = $("org").value;
   lsSet("filters", {from:from, to:to, org:org, rate:$("rate").value});
-  $("run").disabled = true; truncatedSeen = false; skipped = [];
+  $("run").disabled = true; $("resync").disabled = true; truncatedSeen = false; skipped = []; dbWarn = false;
+  var t0 = Date.now();
   try{
     if(!REF) await loadRef();
     var rate = +$("rate").value || REF.rateMain;
     var fromISO = from+"T00:00:00"+TZ, toISO = to+"T23:59:59"+TZ;
     var fromT = new Date(fromISO).getTime(), toT = new Date(toISO).getTime();
 
-    var prodSup = await loadProductSup();
+    if(opts && opts.resync){ await saveMeta(null); }
+
     var purchases = await loadPurchases();
 
     // mahsulot → ta'minotchi → {qty, goods$, extra$}
@@ -430,14 +580,20 @@ async function run(){
       if(new Date(p.d).getTime() > toT) return;
       var s = p.s || "_none";
       if(p.n && !REF.supName[s]) REF.supName[s] = p.n;
-      p.it.forEach(function(x){
-        var a = pm[x[0]] || (pm[x[0]] = {}); var b = a[s] || (a[s] = {q:0,g:0,e:0});
-        b.q += x[1]; b.g += x[1]*x[2]; b.e += x[3];
+      (p.it||[]).forEach(function(x){
+        var a = pm[x.p] || (pm[x.p] = {}); var b = a[s] || (a[s] = {q:0,g:0,e:0});
+        b.q += x.q; b.g += x.q*x.c; b.e += x.e;
       });
     });
 
     var sales = await allPages("bito_report_sales_by_item_pagin", {from_date:fromISO, to_date:toISO, organization_ids: org?[org]:undefined}, 100,
       function(d,t){ status("Davrdagi sotuvlar…", null, d, t); });
+
+    var prodSup = null;
+    if(sales.some(function(r){ var s = pm[r.product_id || r._id]; return !s; })) prodSup = await loadProductSup();
+
+    await syncPayments(fromT, rate);
+    var pays = await loadPays(fromT, toT);
 
     var S = {};
     function sup(id){ return S[id] || (S[id] = {id:id, name: id==="_none" ? "Noma'lum ta'minotchi" : (REF.supName[id]||"Ta'minotchi "+String(id).slice(-4)), sold:0, qx:0, bito:0, sales:0, qty:0, est:0, pays:[], paid:0, prods:{}}); }
@@ -456,54 +612,36 @@ async function run(){
           var pr = o.prods[pid] || (o.prods[pid] = {name:r.product_name, qty:0, v:0, est:false}); pr.qty += aq; pr.v += v;
         }
       } else {
-        var o2 = sup(prodSup[pid] || "_none");
+        var o2 = sup((prodSup && prodSup[pid]) || "_none");
         o2.sold += bitoUSD; o2.bito += bitoUSD; o2.sales += salesUSD; o2.qty += nq; o2.est += bitoUSD;
         var pr2 = o2.prods[pid] || (o2.prods[pid] = {name:r.product_name, qty:0, v:0, est:true}); pr2.qty += nq; pr2.v += bitoUSD;
       }
     });
 
-    // Ta'minotchilarga chiqimlar
-    var usdId = REF.usdId;
-    function payUSD(t){
-      var cid = t.currency && t.currency._id || t.currency_id;
-      if(cid===usdId) return +t.amount||0;
-      var bc = (t.balance_changes||[]).filter(function(b){ return b.currency_id===usdId; });
-      if(bc.length) return bc.reduce(function(a,b){ return a+(+b.amount||0); }, 0);
-      if(cid && REF.toUSD[cid] && cid!==REF.mainId) return (+t.amount||0)*REF.toUSD[cid];
-      return (+t.amount_in_main||0)/rate;
-    }
-    var nTx = 0;
-    await allPages("bito_transaction_get_paging", {sort:"-date"}, 20,
-      function(d){ nTx = d; status("Chiqim tranzaksiyalari…", "Davr boshigacha bo'lgan tranzaksiyalar ko'rib chiqilmoqda.", 0, 0); $("stCount").textContent = d+" ta ko'rildi"; },
-      function(page){
-        page.forEach(function(t){
-          var tt = new Date(t.date || t.created_at).getTime();
-          if(tt<fromT || tt>toT) return;
-          if(t.type!=="expense" || t.to_supplier!=="expense") return;
-          if(t.is_deleted || (t.state && t.state!=="done")) return;
-          if(org && t.organization_id!==org) return;
-          var sid = t.supplier_id || (t.supplier && t.supplier._id) || "_none";
-          if(t.supplier && t.supplier.name && !REF.supName[sid]) REF.supName[sid] = t.supplier.name;
-          var o = sup(sid), v = payUSD(t);
-          if(o.name.indexOf("Ta'minotchi ")===0 && t.supplier && t.supplier.name) o.name = t.supplier.name;
-          o.paid += v;
-          o.pays.push({d:t.date||t.created_at, n:t.number, v:v, raw:+t.amount||0, cur:(t.currency&&t.currency.name)||"", type:(t.payment_type&&t.payment_type.name)||"", cash:(t.cashbox&&t.cashbox.name)||"", note:t.description||""});
-        });
-        var lastT = page[page.length-1]; var lt = new Date(lastT.date || lastT.created_at).getTime();
-        return lt < fromT;
-      });
+    Object.keys(pays).forEach(function(id){
+      var p = pays[id], tt = new Date(p.d).getTime();
+      if(tt<fromT || tt>toT || p.st!=="done") return;
+      if(org && p.o!==org) return;
+      if(p.sn && !REF.supName[p.s]) REF.supName[p.s] = p.sn;
+      var o = sup(p.s);
+      if(o.name.indexOf("Ta'minotchi ")===0 && p.sn) o.name = p.sn;
+      o.paid += p.v;
+      o.pays.push(p);
+    });
 
     var rows = Object.keys(S).map(function(k){ return S[k]; }).filter(function(o){ return Math.abs(o.sold)>0.5 || Math.abs(o.paid)>0.5; });
-    last = {rows:rows, from:from, to:to, rate:rate, orgName: org ? $("org").selectedOptions[0].textContent : "Barcha filiallar", nTx:nTx};
+    last = {rows:rows, from:from, to:to, rate:rate, orgName: org ? $("org").selectedOptions[0].textContent : "Barcha filiallar"};
     render();
-    var warn = (skipped.length ? " "+skipped.length+" ta kirim hujjati yuklanmadi ("+skipped.slice(0,5).join(", ")+(skipped.length>5?"…":"")+"), ularning mahsulotlari Bito tannarxi bilan hisoblandi. Qayta \"Hisoblash\" bosilsa, yana urinib ko'riladi." : "") + (truncatedSeen ? " Diqqat: Bito ba'zi javoblarni qisqartirdi, natija to'liq bo'lmasligi mumkin." : "");
-    status("Tayyor", "Kurs: 1$ = "+nf0.format(rate)+" so'm. "+rows.length+" ta ta'minotchi."+warn, 1, 1);
+    var warn = (skipped.length ? " "+skipped.length+" ta kirim hujjati yuklanmadi ("+skipped.slice(0,5).join(", ")+(skipped.length>5?"…":"")+"), ularning mahsulotlari Bito tannarxi bilan hisoblandi. Qayta \"Hisoblash\" bosilsa, yana urinib ko'riladi." : "")
+      + (truncatedSeen ? " Diqqat: Bito ba'zi javoblarni qisqartirdi, natija to'liq bo'lmasligi mumkin." : "")
+      + (!db ? " Saqlash bazasi ochilmadi: keyingi safar ma'lumotlar qaytadan olinadi." : dbWarn ? " Ba'zi ma'lumotlarni bazaga saqlab bo'lmadi." : "");
+    status("Tayyor", "Kurs: 1$ = "+nf0.format(rate)+" so'm. "+rows.length+" ta ta'minotchi. "+Math.round((Date.now()-t0)/1000)+" soniyada hisoblandi."+warn, 1, 1);
     $("stCount").textContent = "";
   }catch(e){
     var t = errText(e), at = step;
-    status(t[0], "Bosqich: "+(at||"boshlanish")+". "+t[1]+(e && e.code ? " (kod: "+e.code+")" : ""), 0, 0, true);
+    status(t[0], "Bosqich: "+(at||"boshlanish")+". "+t[1]+(e && e.code ? " (kod: "+e.code+")" : "")+" Yuklangan qism saqlandi — \"Hisoblash\"ni qayta bosing, to'xtagan joydan davom etadi.", 0, 0, true);
   }finally{
-    $("run").disabled = false;
+    $("run").disabled = false; $("resync").disabled = false;
   }
 }
 
@@ -623,15 +761,17 @@ var h = (location.hash||"").slice(1); if(["qoplama","sotuv","chiqim"].indexOf(h)
 // ---------- filtrlar ----------
 document.querySelectorAll(".chip").forEach(function(c){ c.addEventListener("click", function(){ setPreset(c.getAttribute("data-p")); run(); }); });
 $("filters").addEventListener("submit", function(e){ e.preventDefault(); run(); });
+$("resync").addEventListener("click", function(){ run({resync:true}); });
 
 // ---------- ishga tushirish ----------
 if(!window.claude || !window.claude.use){
   status("Bito ulanmagan", "Bu sahifa jonli Bito ma'lumotlari bilan faqat claude.ai ichida ishlaydi.", 0, 0, true);
   return;
 }
-window.claude.use("mcp").then(function(ns){
-  if(!ns){ status("Bu ko'rinishda Bito ulanmaydi", "Sahifani claude.ai ichida oching va Bito connectoriga ruxsat bering.", 0, 0, true); return; }
-  mcp = ns; run();
+Promise.all([window.claude.use("mcp"), window.claude.use("db").catch(function(){ return null; })]).then(function(ns){
+  db = ns[1];
+  if(!ns[0]){ status("Bu ko'rinishda Bito ulanmaydi", "Sahifani claude.ai ichida oching va Bito connectoriga ruxsat bering.", 0, 0, true); return; }
+  mcp = ns[0]; run();
 });
 })();
 </script>
