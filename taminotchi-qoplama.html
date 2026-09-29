@@ -295,21 +295,32 @@ async function call(tool, input, cache){
 function listOf(r){ return Array.isArray(r) ? r : (r && (r.data || r.items)) || []; }
 var AUTHZ = {needs_reauth:1, server_not_connected:1, selection_required:1, not_in_manifest:1, consent_required:1, blocked_by_policy:1, approval_required:1, not_granted:1, capability_disabled:1, capability_removed:1, user_changed:1};
 function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
-// Sahifalab o'qish. Javob juda katta bo'lsa yoki Bito ulgurmasa, sahifa hajmi kichraytiriladi (20 → 10 → 5).
+// Sahifalab o'qish. Connector javobni qisqartirsa yoki Bito ulgurmasa, sahifa kichraytirilib o'sha joy qayta o'qiladi.
+var SIZES = [200,100,50,40,25,20,10,5,4,2,1];
+function smaller(limit, start, cap){
+  for(var i=0;i<SIZES.length;i++){ var n = SIZES[i]; if(n<limit && n<=cap && start % n === 0) return n; }
+  return 1;
+}
 async function scan(tool, input, startOffset, limit, onPage, cache){
   var off = startOffset, total = null;
-  for(var g=0; g<5000; g++){
-    var page = Math.floor(off/limit)+1, r, fails = 0;
+  if(off % limit) limit = smaller(limit+1, off, limit);
+  for(var g=0; g<20000; g++){
+    var page = Math.floor(off/limit)+1, start = (page-1)*limit, r;
     try{
       r = await call(tool, Object.assign({}, input, {page:page, limit:limit}), cache);
     }catch(e){
       if(e && AUTHZ[e.code]) throw e;
-      if(limit>5 && off % Math.floor(limit/2) === 0){ limit = Math.floor(limit/2); await sleep(800); continue; }
+      if(limit>1){ limit = smaller(limit, start, Math.floor(limit/2)); await sleep(800); continue; }
       throw e;
     }
     var data = listOf(r);
-    off = (page-1)*limit + data.length;
     total = r && typeof r.total==="number" ? r.total : total;
+    var short = data.length < limit && (total!=null ? start+data.length < total : !!(r && r._truncated));
+    if((r && r._truncated) || (short && data.length>0)){
+      // qisqartirilgan javob: bu qatorlarni qabul qilmay, kichikroq sahifa bilan qayta o'qiymiz
+      if(limit>1){ limit = smaller(limit, start, Math.max(1, Math.min(Math.floor(limit/2), data.length))); continue; }
+    }
+    off = start + data.length;
     if(!data.length) break;
     if(await onPage(data, off, total)) break;
     if(total!=null ? off>=total : data.length<limit) break;
@@ -398,7 +409,7 @@ async function loadProductSup(){
   var c = (await dbGet("meta/prodsup")) || lsGet("prodsup");
   if(c && c.m && Date.now()-c.t < 3*864e5) return c.m;
   var m = {};
-  var list = await allPages("bito_product_get_paging", {}, 50, function(d,t){ status("Mahsulotlar ro'yxati (3 kunda bir marta)…", null, d, t); });
+  var list = await allPages("bito_product_get_paging", {}, 50, function(d,t){ status("Mahsulotlar ro'yxati (3 kunda bir marta)…", "", d, t); });
   list.forEach(function(p){ if(p.supplier_ids && p.supplier_ids.length) m[p._id] = p.supplier_ids[0]; });
   var body = {t:Date.now(), m:m};
   await dbSet("meta/prodsup", body); lsSet("prodsup", body);
@@ -431,7 +442,7 @@ async function loadPurchases(){
   var hasKnown = Object.keys(known).length > 0;
   // Yangi yoki o'zgargan kirimlargacha o'qiladi; butun sahifa tanish bo'lsa, to'xtaydi
   var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 50,
-    function(d,t){ status("Kirim hujjatlari ro'yxati…", null, d, t); },
+    function(d,t){ status("Kirim hujjatlari ro'yxati…", "", d, t); },
     function(page){ return hasKnown && page.every(function(p){ var k = known[p._id]; return p.state!=="done" ? !k : (k && k.u===(p.updated_at||"")); }); });
   var need = [];
   for(var i=0;i<list.length;i++){
@@ -587,7 +598,7 @@ async function run(opts){
     });
 
     var sales = await allPages("bito_report_sales_by_item_pagin", {from_date:fromISO, to_date:toISO, organization_ids: org?[org]:undefined}, 100,
-      function(d,t){ status("Davrdagi sotuvlar…", null, d, t); });
+      function(d,t){ status("Davrdagi sotuvlar…", "", d, t); });
 
     var prodSup = null;
     if(sales.some(function(r){ var s = pm[r.product_id || r._id]; return !s; })) prodSup = await loadProductSup();
