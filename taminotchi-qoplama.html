@@ -1,205 +1,266 @@
 <title>Ta'minotchi qoplamasi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Layout: filtr qatori → umumiy qoplama → 3 ta tab (Qoplama / Sotuv tannarxi / Chiqimlar) */
+/* Layout: yopishqoq yuqori panel (davr + filial + yangilash) → 4 ta KPI → umumiy qoplama chizig'i → 3 ta bo'lim (Qoplama / Sotilgan tovar / Chiqimlar) */
 :root{
-  --bg:#f3f5f3; --panel:#ffffff; --ink:#15201b; --muted:#5b6862; --line:#dbe1dd;
-  --accent:#1f5b87; --accent-ink:#ffffff;
-  --sold:#c9372c; --sold-soft:#f7dcd8; --paid:#1c8756; --paid-soft:#d6efe2; --warn:#a86b12; --warn-soft:#f6e8cf;
-  --f-body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --f-num:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  --bg:#f4f5f7; --surface:#ffffff; --raised:#fafbfc; --ink:#0d1320; --ink-2:#3d4757; --muted:#6b7586; --line:#e3e6eb; --line-2:#eef0f3;
+  --accent:#0d1320; --accent-ink:#ffffff; --focus:#2f6fde;
+  --sold:#d93a2f; --sold-soft:#fde8e6; --paid:#14935f; --paid-soft:#dcf3e8; --warn:#b26b00; --warn-soft:#fdf0d8;
+  --shadow:0 1px 2px rgba(13,19,32,.04),0 4px 16px rgba(13,19,32,.05);
+  --f-ui:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-num:'Geist Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  --r:14px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1412; --panel:#171e1b; --ink:#e6ebe8; --muted:#97a49e; --line:#29332f;
-  --accent:#78b0dc; --accent-ink:#0f1412;
-  --sold:#e25a4e; --sold-soft:#3b1e1b; --paid:#3db57d; --paid-soft:#173226; --warn:#e0a449; --warn-soft:#3a2c14; color-scheme:dark}}
+  --bg:#0a0d12; --surface:#12161d; --raised:#161b23; --ink:#e9edf3; --ink-2:#c3cad5; --muted:#8c96a6; --line:#232a35; --line-2:#1b212a;
+  --accent:#e9edf3; --accent-ink:#0a0d12; --focus:#6ea2ff;
+  --sold:#f0564a; --sold-soft:#3a1714; --paid:#2fbf82; --paid-soft:#0f2e21; --warn:#f0a73c; --warn-soft:#33240c;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f1412; --panel:#171e1b; --ink:#e6ebe8; --muted:#97a49e; --line:#29332f;
-  --accent:#78b0dc; --accent-ink:#0f1412;
-  --sold:#e25a4e; --sold-soft:#3b1e1b; --paid:#3db57d; --paid-soft:#173226; --warn:#e0a449; --warn-soft:#3a2c14; color-scheme:dark}
+  --bg:#0a0d12; --surface:#12161d; --raised:#161b23; --ink:#e9edf3; --ink-2:#c3cad5; --muted:#8c96a6; --line:#232a35; --line-2:#1b212a;
+  --accent:#e9edf3; --accent-ink:#0a0d12; --focus:#6ea2ff;
+  --sold:#f0564a; --sold-soft:#3a1714; --paid:#2fbf82; --paid-soft:#0f2e21; --warn:#f0a73c; --warn-soft:#33240c;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5;padding:24px 16px 56px}
-.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
-h1{font-size:26px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
-h2{font-size:17px;font-weight:600;margin:0}
-.sub{color:var(--muted);margin:4px 0 0;max-width:70ch}
-.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.5;padding-inline:16px;padding-block:0 56px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .muted{color:var(--muted)}
-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
-.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
-.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
-.fld label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
-.fld input,.fld select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:0}
-.fld input[type=number]{width:110px}
-.presets{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
-.chip:hover{border-color:var(--accent)}
-.btn{font:inherit;font-weight:600;border:0;border-radius:7px;padding:9px 16px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
-.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.chip[disabled]{opacity:.5;cursor:progress}
-.btn[disabled]{opacity:.5;cursor:progress}
-button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* yuqori panel */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-inline:-16px;padding:14px 16px 12px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:8px;flex:none;background:linear-gradient(90deg,var(--paid) 0 62%,var(--sold) 62% 100%)}
+.brand h1{font-size:17px;font-weight:650;margin:0;letter-spacing:-.01em;white-space:nowrap}
+.brand small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:5px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.seg button:hover{background:var(--line-2)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.field{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 4px 0 10px;height:36px}
+.field label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{border:0;background:transparent;height:34px;padding:0 4px;min-width:0;font-size:13px}
+.field input[type=date]{width:128px}
+.field input[type=number]{width:72px}
+.field select{max-width:180px}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:13px;cursor:pointer}
+.btn svg{width:15px;height:15px}
+.btn.spin svg{animation:spin 1s linear infinite}
+.btn[disabled]{opacity:.6;cursor:progress}
+.ghost{height:36px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0 12px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.ghost:hover{border-color:var(--muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-.status{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.status .row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.pbar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
-.pbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
-.err{border-color:var(--sold);background:var(--sold-soft)}
-.note{font-size:12px;color:var(--muted)}
+/* holat */
+.sync{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:12.5px;color:var(--muted);min-height:26px}
+.task{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 8px;white-space:nowrap}
+.task i{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.task.run i{background:var(--focus);animation:pulse 1s ease-in-out infinite}
+.task.ok i{background:var(--paid)}
+.task.err{border-color:var(--sold);color:var(--sold)} .task.err i{background:var(--sold)}
+@keyframes pulse{50%{opacity:.3}}
+.alert{border:1px solid var(--sold);background:var(--sold-soft);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.alert b{color:var(--sold)}
+.alert span{color:var(--ink-2);font-size:13px}
 
-.hero{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.kpi{display:flex;flex-direction:column;gap:2px;min-width:0}
-.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
-.kpi .v{font-family:var(--f-num);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.sw{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none}
-.sw.s{background:var(--sold)} .sw.p{background:var(--paid)}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow);min-width:0}
+.kpi .l{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);font-weight:500}
+.kpi .v{font-family:var(--f-num);font-size:26px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.15;overflow-wrap:anywhere}
+.kpi .s{font-size:12px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;flex:none}
+.dot.s{background:var(--sold)} .dot.p{background:var(--paid)}
+.kpi.hl .v{color:var(--sold)}
+.kpi.good .v{color:var(--paid)}
 
-/* Qoplama chizig'i: qizil = sotilgan tovar tannarxi, yashil = to'langan pul, qizilni ustidan bosib keladi */
-.cov{position:relative;height:22px;border-radius:5px;background:var(--sold);overflow:hidden}
-.cov.big{height:34px;border-radius:7px}
-.cov .fill{position:absolute;inset:0 auto 0 0;background:var(--paid);border-right:2px solid var(--panel);transition:width .5s ease}
-.cov .fill.full{border-right:0}
-.cov .pct{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--f-num);font-size:12px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
-.cov.big .pct{font-size:14px}
-.cov.none{background:var(--line)}
-.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted)}
-.legend span{display:flex;align-items:center;gap:6px}
+/* umumiy qoplama */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.hero-h{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:baseline}
+.hero-h h2{margin:0;font-size:15px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
 
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
-.tab{font:inherit;font-weight:600;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;white-space:nowrap}
-.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
-.tab .cnt{font-family:var(--f-num);font-size:11px;background:var(--line);color:var(--ink);border-radius:999px;padding:1px 7px;margin-left:6px}
-.pane{display:flex;flex-direction:column;gap:12px}
-.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.toolbar input[type=search]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:7px 10px;min-width:0;width:240px;max-width:100%}
+/* Qoplama chizig'i: qizil = sotilgan tovar tannarxi; yashil = berilgan pul, qizil ustidan to'lib boradi */
+.bar{position:relative;height:12px;border-radius:999px;background:var(--sold);overflow:hidden}
+.bar.big{height:30px;border-radius:10px}
+.bar .f{position:absolute;inset:0 auto 0 0;background:var(--paid);border-radius:inherit;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar .f:not(.full){border-radius:inherit;border-top-right-radius:0;border-bottom-right-radius:0;box-shadow:2px 0 0 var(--surface)}
+.bar .t{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--f-num);font-size:13px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.bar.none{background:var(--line)}
+.bar .over{position:absolute;right:0;top:0;bottom:0;width:4px;background:repeating-linear-gradient(45deg,#fff8 0 2px,transparent 2px 4px)}
 
-.rows{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.srow{border-top:1px solid var(--line)}
-.srow:first-child{border-top:0}
-.srow>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) auto;gap:14px;align-items:center;padding:12px 16px}
-.srow>summary::-webkit-details-marker{display:none}
-.srow>summary:hover{background:var(--bg)}
-.sname{font-weight:600;overflow-wrap:anywhere}
-.smeta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
-.sfig{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:150px}
-.pill{font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+/* bo'limlar */
+.tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
+.tab{border:0;background:none;padding:7px 14px;border-radius:9px;font-weight:550;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap;display:inline-flex;gap:8px;align-items:center}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected=true]{background:var(--accent);color:var(--accent-ink)}
+.tab .c{font-family:var(--f-num);font-size:11px;padding:0 7px;border-radius:999px;background:var(--line-2);color:var(--ink-2)}
+.tab[aria-selected=true] .c{background:color-mix(in srgb,var(--accent-ink) 22%,transparent);color:var(--accent-ink)}
+.bar-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.bar-tools .l{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search{height:36px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0 12px;min-width:0;width:240px;max-width:100%;font-size:13px}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);cursor:pointer;user-select:none}
+.chk input{accent-color:var(--sold);width:15px;height:15px}
+
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.row{border-top:1px solid var(--line-2)}
+.row:first-child{border-top:0}
+.row>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.6fr) minmax(0,1.25fr) 18px;gap:18px;align-items:center;padding:14px 16px}
+.row>summary::-webkit-details-marker{display:none}
+.row>summary:hover{background:var(--raised)}
+.nm{display:flex;flex-direction:column;gap:4px;min-width:0}
+.nm b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.pill{align-self:flex-start;font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap}
 .pill.ok{background:var(--paid-soft);color:var(--paid)}
 .pill.mid{background:var(--warn-soft);color:var(--warn)}
 .pill.low{background:var(--sold-soft);color:var(--sold)}
-.pill.na{background:var(--line);color:var(--muted)}
-.rest{font-family:var(--f-num);font-size:13px;font-weight:600}
-.rest.debt{color:var(--sold)} .rest.over{color:var(--paid)}
-.detail{padding:4px 16px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.detail h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
+.pill.na{background:var(--line-2);color:var(--muted)}
+.mid-col{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mid-col .pc{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.mid-col .pc b{font-family:var(--f-num);color:var(--ink);font-weight:600}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:right}
+.figs div{display:flex;flex-direction:column;min-width:0}
+.figs small{font-size:11px;color:var(--muted)}
+.figs span{font-family:var(--f-num);font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.figs .debt{color:var(--sold);font-weight:600}
+.figs .over{color:var(--paid);font-weight:600}
+.chev{width:16px;height:16px;color:var(--muted);transition:transform .2s}
+.row[open] .chev{transform:rotate(90deg)}
+.detail{padding:2px 16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;background:var(--raised);border-top:1px solid var(--line-2)}
+.detail h3{font-size:12px;font-weight:600;color:var(--muted);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em}
 
-.tbl-wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px}
-.detail .tbl-wrap{border-radius:8px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.list-tw{box-shadow:var(--shadow);border-radius:var(--r)}
 table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
-td.wrap{white-space:normal;min-width:160px}
-th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--panel);position:sticky;top:0}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--line-2);white-space:nowrap}
+td.w{white-space:normal;min-width:170px}
+th{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);position:sticky;top:0}
 th[data-k]{cursor:pointer;user-select:none}
 th[data-k]:hover{color:var(--ink)}
-th.r,td.r{text-align:right}
+.r{text-align:right}
 td.r{font-family:var(--f-num);font-variant-numeric:tabular-nums}
-tbody tr:hover{background:var(--bg)}
-tfoot td{font-weight:700;border-bottom:0;background:var(--bg)}
-.empty{padding:28px 16px;text-align:center;color:var(--muted)}
-.method{font-size:12px;color:var(--muted);line-height:1.6}
-.method summary{cursor:pointer;font-weight:600;color:var(--ink)}
-.method ul{margin:8px 0 0;padding-left:18px;max-width:90ch}
+tbody tr:hover{background:var(--raised)}
+tfoot td{font-weight:600;border-bottom:0;background:var(--raised)}
+.empty{padding:36px 16px;text-align:center;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);margin:0;max-width:90ch}
 
-@media (max-width:720px){
-  .srow>summary{grid-template-columns:minmax(0,1fr) auto}
-  .srow>summary .cov{grid-column:1 / -1;grid-row:2}
-  .sfig{min-width:0}
-  .kpi .v{font-size:20px}
+/* yuklanish skeleti */
+.sk{background:linear-gradient(90deg,var(--line-2) 0,var(--line) 40%,var(--line-2) 80%);background-size:300% 100%;animation:sh 1.4s ease infinite;border-radius:8px}
+@keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
+.skrow{display:grid;grid-template-columns:1.15fr 1.6fr 1.25fr;gap:18px;padding:18px 16px;border-top:1px solid var(--line-2)}
+.skrow:first-child{border-top:0}
+
+.method{font-size:12.5px;color:var(--muted);line-height:1.65}
+.method summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
+.method ul{margin:8px 0 0;padding-left:18px;max-width:92ch}
+
+@media (max-width:980px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row>summary{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 18px}
+  .row>summary .figs{grid-column:1 / -1;grid-row:2;text-align:left}
+  .row>summary .chev{grid-column:3;grid-row:1}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:640px){
+  .top{position:static}
+  .brand small{display:none}
+  .row>summary{grid-template-columns:minmax(0,1fr) 18px;gap:10px}
+  .row>summary .mid-col{grid-column:1 / -1;grid-row:2}
+  .row>summary .figs{grid-row:3}
+  .kpi .v{font-size:21px}
+  .field input[type=date]{width:118px}
+  .skrow{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Ta'minotchi qoplamasi</h1>
-      <p class="sub">Tanlangan davrda har bir ta'minotchining sotilgan tovari (QXsiz tannarxda) va shu davrda unga qilingan chiqimlar, dollarda. Qizil maydon — sotilgan tovar, yashil — biz bergan pul.</p>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div><h1>Ta'minotchi qoplamasi</h1><small>Sotilgan tovar (QXsiz tannarx) va berilgan pul, $</small></div>
     </div>
-  </header>
-
-  <form class="filters" id="filters">
-    <div class="fld"><label for="from">Boshlanish</label><input type="date" id="from" required></div>
-    <div class="fld"><label for="to">Tugash</label><input type="date" id="to" required></div>
-    <div class="fld"><label for="org">Filial</label><select id="org"><option value="">Barcha filiallar</option></select></div>
-    <div class="fld"><label for="rate">Kurs (so'm / $)</label><input type="number" id="rate" min="1" step="1" placeholder="Bitodan"></div>
-    <div class="fld"><label>Tez tanlash</label>
-      <div class="presets">
-        <button type="button" class="chip" data-p="month">Bu oy</button>
-        <button type="button" class="chip" data-p="prev">O'tgan oy</button>
-        <button type="button" class="chip" data-p="30">30 kun</button>
-        <button type="button" class="chip" data-p="year">Bu yil</button>
+    <form class="controls" id="filters">
+      <div class="seg" role="group" aria-label="Davr">
+        <button type="button" data-p="month" aria-pressed="false">Bu oy</button>
+        <button type="button" data-p="prev" aria-pressed="false">O'tgan oy</button>
+        <button type="button" data-p="30" aria-pressed="false">30 kun</button>
+        <button type="button" data-p="year" aria-pressed="false">Bu yil</button>
       </div>
-    </div>
-    <div class="actions"><button class="btn" id="run" type="submit">Hisoblash</button><button class="chip" id="resync" type="button" title="Tanlangan davrdagi chiqimlarni Bitodan qaytadan o'qiydi">Chiqimlarni qayta tekshirish</button></div>
-  </form>
+      <div class="field"><label for="from">dan</label><input type="date" id="from" required></div>
+      <div class="field"><label for="to">gacha</label><input type="date" id="to" required></div>
+      <div class="field"><label for="org">Filial</label><select id="org"><option value="">Hammasi</option></select></div>
+      <div class="field" title="1 dollar necha so'm. Bo'sh bo'lsa Bitodagi kurs olinadi"><label for="rate">Kurs</label><input type="number" id="rate" min="1" step="1" placeholder="—"></div>
+      <button class="btn" id="run" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Yangilash</button>
+    </form>
+  </div>
+</header>
 
-  <section class="status" id="status" aria-live="polite">
-    <div class="row"><strong id="stTitle">Bito bilan ulanmoqda…</strong><span class="muted num" id="stCount"></span></div>
-    <div class="pbar"><i id="stBar"></i></div>
-    <div class="note" id="stNote">Birinchi ochilishda Bito connectoriga ruxsat so'raladi. Kirim hujjatlari va to'lovlar bir marta olinadi va dashboard bazasida saqlanadi — keyingi hisoblashlarda faqat yangilari o'qiladi.</div>
+<main class="wrap" style="margin-top:16px">
+  <div class="sync" id="sync" aria-live="polite"><span id="syncText">Bito bilan ulanmoqda…</span></div>
+  <div class="alert" id="alert" hidden><b id="alertT"></b><span id="alertM"></span></div>
+
+  <section class="kpis" id="kpis">
+    <div class="kpi"><span class="l"><i class="dot s"></i>Sotilgan tovar · QXsiz tannarx</span><span class="v" id="kSold"><span class="sk" style="display:block;height:30px;width:70%"></span></span><span class="s" id="kSoldS">&nbsp;</span></div>
+    <div class="kpi"><span class="l"><i class="dot p"></i>Ta'minotchilarga berilgan</span><span class="v" id="kPaid"><span class="sk" style="display:block;height:30px;width:60%"></span></span><span class="s" id="kPaidS">&nbsp;</span></div>
+    <div class="kpi" id="kCovBox"><span class="l">Qoplama</span><span class="v" id="kCov"><span class="sk" style="display:block;height:30px;width:40%"></span></span><span class="s" id="kCovS">&nbsp;</span></div>
+    <div class="kpi hl" id="kRestBox"><span class="l">Qoplanmagan qism</span><span class="v" id="kRest"><span class="sk" style="display:block;height:30px;width:55%"></span></span><span class="s" id="kRestS">&nbsp;</span></div>
   </section>
 
-  <section class="hero" id="hero" hidden>
-    <div class="kpis">
-      <div class="kpi"><span class="l"><i class="sw s"></i>Sotilgan tovar (QXsiz tannarx)</span><span class="v" id="kSold">—</span></div>
-      <div class="kpi"><span class="l"><i class="sw p"></i>Ta'minotchilarga chiqim</span><span class="v" id="kPaid">—</span></div>
-      <div class="kpi"><span class="l">Qoplama</span><span class="v" id="kCov">—</span></div>
-      <div class="kpi"><span class="l">Qoplanmagan qism</span><span class="v" id="kRest">—</span></div>
-    </div>
-    <div class="cov big" id="heroBar"><div class="fill" id="heroFill"></div><span class="pct" id="heroPct"></span></div>
+  <section class="hero">
+    <div class="hero-h"><h2>Umumiy qoplama</h2><span class="muted num" id="period"></span></div>
+    <div class="bar big" id="heroBar"><div class="f" id="heroFill" style="width:0"></div><span class="t" id="heroPct"></span></div>
     <div class="legend">
-      <span><i class="sw s"></i>Sotilgan tovar summasi (to'lanmagan qismi qizil qoladi)</span>
-      <span><i class="sw p"></i>Berilgan pul — qizil ustidan to'lib boradi</span>
-      <span id="period" class="num"></span>
+      <span><i class="dot s"></i>Sotilgan tovar summasi — to'lanmagan qismi qizil qoladi</span>
+      <span><i class="dot p"></i>Berilgan pul — qizil ustidan to'lib boradi</span>
     </div>
   </section>
 
-  <section id="main" hidden>
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="t-qoplama" aria-selected="true" data-tab="qoplama">Qoplama<span class="cnt" id="cQ">0</span></button>
-      <button class="tab" role="tab" id="t-sotuv" aria-selected="false" data-tab="sotuv">Sotilgan tovar<span class="cnt" id="cS">0</span></button>
-      <button class="tab" role="tab" id="t-chiqim" aria-selected="false" data-tab="chiqim">Chiqimlar<span class="cnt" id="cC">0</span></button>
-    </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-qoplama" aria-selected="true" data-tab="qoplama">Qoplama<span class="c" id="cQ">0</span></button>
+    <button class="tab" role="tab" id="t-sotuv" aria-selected="false" data-tab="sotuv">Sotilgan tovar<span class="c" id="cS">0</span></button>
+    <button class="tab" role="tab" id="t-chiqim" aria-selected="false" data-tab="chiqim">Chiqimlar<span class="c" id="cC">0</span></button>
+  </nav>
 
-    <div class="pane" id="p-qoplama" role="tabpanel" style="margin-top:14px">
-      <div class="toolbar">
-        <input type="search" id="qSearch" placeholder="Ta'minotchi qidirish">
-        <div class="fld"><label for="qSort">Tartib</label>
-          <select id="qSort">
-            <option value="rest">Eng ko'p qarz qolgan</option>
-            <option value="covAsc">Qoplama past → yuqori</option>
-            <option value="covDesc">Qoplama yuqori → past</option>
-            <option value="sold">Sotilgan summa</option>
-            <option value="paid">Berilgan pul</option>
-            <option value="name">Nomi</option>
-          </select>
-        </div>
+  <section id="p-qoplama" role="tabpanel" style="display:flex;flex-direction:column;gap:12px">
+    <div class="bar-tools">
+      <div class="l">
+        <input type="search" class="search" id="qSearch" placeholder="Ta'minotchi qidirish…" aria-label="Ta'minotchi qidirish">
+        <label class="chk"><input type="checkbox" id="qDebt">Faqat qarzi qolganlar</label>
       </div>
-      <div class="rows" id="qRows"></div>
+      <div class="field"><label for="qSort">Tartib</label>
+        <select id="qSort">
+          <option value="rest">Eng ko'p qarz</option>
+          <option value="covAsc">Qoplama: pastdan</option>
+          <option value="covDesc">Qoplama: yuqoridan</option>
+          <option value="sold">Sotilgan summa</option>
+          <option value="paid">Berilgan pul</option>
+          <option value="name">Nomi (A–Z)</option>
+        </select>
+      </div>
     </div>
+    <div class="list" id="qRows">
+      <div class="skrow"><div class="sk" style="height:18px"></div><div class="sk" style="height:12px;margin-top:4px"></div><div class="sk" style="height:18px"></div></div>
+      <div class="skrow"><div class="sk" style="height:18px"></div><div class="sk" style="height:12px;margin-top:4px"></div><div class="sk" style="height:18px"></div></div>
+      <div class="skrow"><div class="sk" style="height:18px"></div><div class="sk" style="height:12px;margin-top:4px"></div><div class="sk" style="height:18px"></div></div>
+      <div class="skrow"><div class="sk" style="height:18px"></div><div class="sk" style="height:12px;margin-top:4px"></div><div class="sk" style="height:18px"></div></div>
+    </div>
+  </section>
 
-    <div class="pane" id="p-sotuv" role="tabpanel" hidden style="margin-top:14px">
-      <p class="note">QXsiz tannarx = sotilgan soni × kirimdagi o'rtacha tannarx ($), qo'shimcha xarajatlarsiz (yo'lkira, kargo va h.k. kirmaydi). Qatorni bosib saralang.</p>
-      <div class="tbl-wrap"><table id="sTbl"></table></div>
-    </div>
+  <section id="p-sotuv" role="tabpanel" hidden style="flex-direction:column;gap:10px">
+    <p class="note">QXsiz tannarx = sotilgan soni × kirimdagi o'rtacha birlik narxi ($), qo'shimcha xarajatsiz (yo'lkira, kargo va h.k. kirmaydi). Ustun nomini bosib saralang.</p>
+    <div class="tw list-tw"><table id="sTbl"></table></div>
+  </section>
 
-    <div class="pane" id="p-chiqim" role="tabpanel" hidden style="margin-top:14px">
-      <p class="note">Ta'minotchi balansini kamaytiruvchi chiqim tranzaksiyalari (to'lovlar), tanlangan davr bo'yicha.</p>
-      <div class="tbl-wrap"><table id="cTbl"></table></div>
-    </div>
+  <section id="p-chiqim" role="tabpanel" hidden style="flex-direction:column;gap:10px">
+    <p class="note">Ta'minotchi balansini kamaytiruvchi chiqimlar (to'lovlar), tanlangan davr bo'yicha. Bekor qilinganlari hisobga olinmaydi.</p>
+    <div class="tw list-tw"><table id="cTbl"></table></div>
   </section>
 
   <details class="method">
@@ -208,11 +269,13 @@ tfoot td{font-weight:700;border-bottom:0;background:var(--bg)}
       <li><b>Sotilgan tovar</b>: Bito "mahsulotlar bo'yicha sotuv" hisobotidan davrdagi sotilgan soni (qaytarilganlar ayirilgan).</li>
       <li><b>Ta'minotchi</b>: mahsulot qaysi ta'minotchidan kirim qilingan bo'lsa, o'sha. Bir mahsulot bir necha ta'minotchidan kelgan bo'lsa, sotilgan soni kirim miqdoriga mutanosib bo'linadi. Kirimi topilmagan mahsulot kartochkasidagi ta'minotchiga yoziladi.</li>
       <li><b>QXsiz tannarx</b>: kirim hujjatidagi birlik narxi, qo'shimcha xarajat (QX) qo'shilmasdan, davr oxirigacha bo'lgan kirimlar bo'yicha o'rtacha, dollarga o'girilgan. Kirimi topilmagan mahsulotlar uchun Bito tannarxi ishlatiladi va "taxminiy" deb belgilanadi.</li>
-      <li><b>Chiqim</b>: turi "chiqim" bo'lgan va ta'minotchi balansiga yozilgan tranzaksiyalar. Dollardagi to'lov o'z summasida, so'mdagi to'lov ta'minotchi balansidagi dollar summasi yoki kurs bo'yicha o'giriladi.</li>
-      <li><b>Qoplama</b> = chiqim ÷ QXsiz tannarx. 100% dan oshsa, sotilganidan ko'proq pul berilgan.</li>
+      <li><b>Chiqim</b>: turi "chiqim" bo'lgan va ta'minotchi balansiga yozilgan tranzaksiyalar. Dollar va yuandagi to'lov ta'minotchi balansidagi dollar summasida, so'mdagi to'lov kurs bo'yicha o'giriladi.</li>
+      <li><b>Qoplama</b> = berilgan pul ÷ QXsiz tannarx. 100% dan oshsa, sotilganidan ko'proq pul berilgan.</li>
+      <li><b>Tezlik</b>: kirimlar, to'lovlar va oxirgi natija dashboard bazasida saqlanadi. Ochilganda saqlangan natija darhol ko'rinadi, Bitodan faqat yangi yozuvlar o'qiladi.</li>
     </ul>
+    <p style="margin:8px 0 0"><button type="button" class="ghost" id="resync">To'lovlarni Bitodan qaytadan o'qish</button></p>
   </details>
-</div>
+</main>
 
 <script>
 (function(){
@@ -222,24 +285,34 @@ var TZ = "+05:00";
 var LS = "tq1:";
 var $ = function(id){ return document.getElementById(id); };
 
-// ---------- storage (faqat qulaylik uchun) ----------
+// ---------- brauzer xotirasi (faqat qulaylik uchun) ----------
 function lsGet(k){ try{ var v = localStorage.getItem(LS+k); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
 
 // ---------- sanalar ----------
 function pad(n){ return (n<10?"0":"")+n; }
 function ymd(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
-function setPreset(p){
+function presetRange(p){
   var now = new Date(), f, t = now;
   if(p==="month"){ f = new Date(now.getFullYear(), now.getMonth(), 1); }
   else if(p==="prev"){ f = new Date(now.getFullYear(), now.getMonth()-1, 1); t = new Date(now.getFullYear(), now.getMonth(), 0); }
   else if(p==="30"){ f = new Date(now.getTime()-29*864e5); }
   else { f = new Date(now.getFullYear(), 0, 1); }
-  $("from").value = ymd(f); $("to").value = ymd(t);
+  return [ymd(f), ymd(t)];
+}
+function markPreset(){
+  var f = $("from").value, t = $("to").value;
+  document.querySelectorAll(".seg button").forEach(function(b){ var r = presetRange(b.getAttribute("data-p")); b.setAttribute("aria-pressed", r[0]===f && r[1]===t ? "true" : "false"); });
 }
 var saved = lsGet("filters");
-if(saved && saved.from && saved.to){ $("from").value = saved.from; $("to").value = saved.to; if(saved.rate) $("rate").value = saved.rate; }
-else setPreset("month");
+(function(){
+  var r = saved && saved.preset ? presetRange(saved.preset) : null;
+  if(r){ $("from").value = r[0]; $("to").value = r[1]; }
+  else if(saved && saved.from && saved.to){ $("from").value = saved.from; $("to").value = saved.to; }
+  else { r = presetRange("month"); $("from").value = r[0]; $("to").value = r[1]; }
+  if(saved && saved.rate) $("rate").value = saved.rate;
+  markPreset();
+})();
 
 // ---------- formatlash ----------
 var nf0 = new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0});
@@ -248,16 +321,25 @@ function usd(v){ var s = nf0.format(Math.round(Math.abs(v))); return (v<0?"−":
 function pct(v){ return isFinite(v) ? nf0.format(Math.round(v*100))+"%" : "—"; }
 function qty(v){ return nf1.format(v); }
 function fdate(iso){ if(!iso) return ""; var d = new Date(iso); return pad(d.getDate())+"."+pad(d.getMonth()+1)+"."+d.getFullYear(); }
+function ftime(ms){ var d = new Date(ms); var today = ymd(d)===ymd(new Date()); return (today ? "bugun " : fdate(d.toISOString())+" ")+pad(d.getHours())+":"+pad(d.getMinutes()); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
-// ---------- status ----------
-function status(title, note, done, total, isErr){
-  if(!isErr) step = title.replace(/…$/,"");
-  var el = $("status"); el.hidden = false; el.classList.toggle("err", !!isErr);
-  $("stTitle").textContent = title;
-  if(note!=null) $("stNote").textContent = note;
-  $("stCount").textContent = total ? (done+" / "+total) : "";
-  $("stBar").style.width = total ? Math.min(100, done/total*100)+"%" : (isErr ? "0" : "8%");
+// ---------- holat ----------
+var TASKS = {};
+function task(id, label, state){
+  TASKS[id] = {label:label, state:state};
+  renderSync();
+}
+var syncText = "";
+function renderSync(){
+  var html = syncText ? '<span>'+esc(syncText)+'</span>' : "";
+  Object.keys(TASKS).forEach(function(k){ var t = TASKS[k]; html += '<span class="task '+t.state+'"><i></i>'+esc(t.label)+'</span>'; });
+  $("sync").innerHTML = html;
+}
+function setSync(text){ syncText = text; renderSync(); }
+function alertBox(title, msg){
+  $("alert").hidden = !title;
+  if(title){ $("alertT").textContent = title; $("alertM").textContent = msg||""; }
 }
 
 // ---------- MCP ----------
@@ -277,7 +359,7 @@ function unwrap(r){
   var p = parseMaybe(r.payload); if(p) return p;
   throw {code:"parse", message:"Bito javobini o'qib bo'lmadi"};
 }
-var truncatedSeen = false, skipped = [], step = "";
+var truncatedSeen = false, skipped = [];
 async function call(tool, input, cache){
   var attempt = 0;
   for(;;){
@@ -287,7 +369,7 @@ async function call(tool, input, cache){
       if(out && out._truncated) truncatedSeen = true;
       return out;
     }catch(e){
-      if(e && e.retryable && attempt<1){ attempt++; await new Promise(function(res){ setTimeout(res, (e.retryAfterMs||1200)+Math.random()*800); }); continue; }
+      if(e && e.retryable && attempt<2){ attempt++; await sleep((e.retryAfterMs||1000)+Math.random()*800); continue; }
       throw e;
     }
   }
@@ -295,6 +377,7 @@ async function call(tool, input, cache){
 function listOf(r){ return Array.isArray(r) ? r : (r && (r.data || r.items)) || []; }
 var AUTHZ = {needs_reauth:1, server_not_connected:1, selection_required:1, not_in_manifest:1, consent_required:1, blocked_by_policy:1, approval_required:1, not_granted:1, capability_disabled:1, capability_removed:1, user_changed:1};
 function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+
 // Sahifalab o'qish. Connector javobni qisqartirsa yoki Bito ulgurmasa, sahifa kichraytirilib o'sha joy qayta o'qiladi.
 var SIZES = [200,100,50,40,25,20,10,5,4,2,1];
 function smaller(limit, start, cap){
@@ -310,14 +393,13 @@ async function scan(tool, input, startOffset, limit, onPage, cache){
       r = await call(tool, Object.assign({}, input, {page:page, limit:limit}), cache);
     }catch(e){
       if(e && AUTHZ[e.code]) throw e;
-      if(limit>1){ limit = smaller(limit, start, Math.floor(limit/2)); await sleep(800); continue; }
+      if(limit>1){ limit = smaller(limit, start, Math.floor(limit/2)); await sleep(600); continue; }
       throw e;
     }
     var data = listOf(r);
     total = r && typeof r.total==="number" ? r.total : total;
     var short = data.length < limit && (total!=null ? start+data.length < total : !!(r && r._truncated));
     if((r && r._truncated) || (short && data.length>0)){
-      // qisqartirilgan javob: bu qatorlarni qabul qilmay, kichikroq sahifa bilan qayta o'qiymiz
       if(limit>1){ limit = smaller(limit, start, Math.max(1, Math.min(Math.floor(limit/2), data.length))); continue; }
     }
     off = start + data.length;
@@ -337,31 +419,26 @@ async function allPages(tool, input, limit, onProgress, stop, cache){
   return out;
 }
 async function pool(items, n, fn){
-  var i = 0;
-  var workers = [];
+  var i = 0, workers = [];
   for(var w=0; w<n; w++) workers.push((async function(){ while(i<items.length){ var idx = i++; await fn(items[idx], idx); } })());
   await Promise.all(workers);
 }
 function errText(e){
   var c = e && e.code;
-  if(c==="server_not_connected") return ["Bito connectori topilmadi", "claude.ai → Settings → Connectors bo'limida \"bito\" connectorini qo'shing, keyin sahifani yangilang."];
+  if(c==="server_not_connected") return ["Bito connectori topilmadi", "claude.ai → Settings → Connectors bo'limida Bito connectorini qo'shing, keyin sahifani yangilang."];
   if(c==="needs_reauth") return ["Bito connectoriga qayta ulanish kerak", "claude.ai → Settings → Connectors bo'limida Bito'ni qayta ulang."];
-  if(c==="selection_required") return ["Bir nechta Bito connectori bor", "Qaysi birini ishlatishni tanlang (Claude oynasi so'raydi), keyin \"Hisoblash\"ni bosing."];
-  if(c==="not_in_manifest" || c==="consent_required") return ["Bito'ga ruxsat berilmagan", "Bu sahifa uchun Bito connectoriga ruxsat bering va \"Hisoblash\"ni qayta bosing."];
+  if(c==="selection_required") return ["Bir nechta Bito connectori bor", "Qaysi birini ishlatishni tanlang (Claude oynasi so'raydi), keyin \"Yangilash\"ni bosing."];
+  if(c==="not_in_manifest" || c==="consent_required") return ["Bito'ga ruxsat berilmagan", "Bu sahifa uchun Bito connectoriga ruxsat bering va \"Yangilash\"ni bosing."];
   if(c==="blocked_by_policy" || c==="approval_required") return ["Tashkilot siyosati bu so'rovni to'sdi", "Administrator bilan bog'laning."];
-  if(c==="server_unavailable" || c==="rate_limited") return ["Bito hozir javob bermayapti", "Bir ozdan keyin \"Hisoblash\"ni qayta bosing."];
+  if(c==="server_unavailable" || c==="rate_limited") return ["Bito hozir javob bermayapti", "Bir ozdan keyin \"Yangilash\"ni bosing — yuklangan qism saqlangan."];
   if(c==="tool_error") return ["Bito xatolik qaytardi", (e.message||"").slice(0,300)];
   if(c==="not_granted" || c==="capability_disabled" || c==="capability_removed") return ["Bu ko'rinishda Bito ulanmaydi", "Sahifani claude.ai ichida oching."];
-  return ["Ma'lumot olishda xatolik", (e && e.message) || String(e)];
+  return ["Ma'lumot olishda xatolik", ((e && e.message) || String(e))+" — \"Yangilash\"ni bosing, yuklangan qism saqlangan."];
 }
 
-// ---------- ma'lumot ----------
-var REF = null; // valyuta, filiallar, ta'minotchilar
-var last = null; // oxirgi hisob natijasi
+// ---------- dashboard bazasi ----------
 var db = null, dbWarn = false;
-var MEM = {pay:{}, meta:null}; // baza bo'lmasa, sahifa ochiq turganda saqlanadi
-
-// Dashboard bazasi: bir marta olingan kirim va to'lovlar shu yerda saqlanadi
+var MEM = {pay:{}, meta:null};
 async function dbGet(path){
   if(!db) return null;
   try{ var s = await db.doc(path).get(); return s.exists ? s.data() : null; }catch(e){ dbWarn = true; return null; }
@@ -379,44 +456,65 @@ async function dbMerge(path, data){
   }
 }
 
-async function loadRef(){
-  status("Ma'lumotnomalar yuklanmoqda…", null);
+// ---------- ma'lumotnomalar (12 soat saqlanadi) ----------
+var REF = null;
+function fillOrgs(orgs){
+  var sel = $("org"), keep = sel.value || (saved && saved.org) || "";
+  sel.innerHTML = '<option value="">Hammasi</option>' + orgs.map(function(o){ return '<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>'; }).join("");
+  sel.value = keep;
+  if(sel.value!==keep) sel.value = "";
+}
+function applyRef(ref){
+  REF = ref;
+  fillOrgs(ref.orgs||[]);
+  $("rate").placeholder = String(Math.round(ref.rateMain));
+}
+async function fetchRef(){
   var cur = listOf(await call("bito_currency_get_all", {}, true));
   var usdC = cur.find(function(c){ return c.code==="usd"; });
   var mainC = cur.find(function(c){ return c.is_main; });
   if(!usdC) throw {message:"Bitoda USD valyutasi topilmadi"};
   var toUSD = {}; toUSD[usdC._id] = 1;
-  var rateMain = 1;
   cur.forEach(function(c){
     if(c._id===usdC._id) return;
     var v = (c.values||[]).find(function(x){ return x.to_currency_id===usdC._id; });
     toUSD[c._id] = v ? (v.numerator && v.denominator ? v.numerator/v.denominator : v.value) : 0;
   });
   var vm = (usdC.values||[]).find(function(x){ return mainC && x.to_currency_id===mainC._id; });
-  if(vm) rateMain = vm.value;
-  var orgs = listOf(await call("bito_organization_get_all", {}, true));
-  var sel = $("org"), keep = sel.value;
-  sel.innerHTML = '<option value="">Barcha filiallar</option>' + orgs.filter(function(o){ return o.is_active!==false; }).map(function(o){ return '<option value="'+esc(o._id)+'">'+esc(o.name)+'</option>'; }).join("");
-  if(saved && saved.org) sel.value = saved.org; else sel.value = keep;
+  var orgs = listOf(await call("bito_organization_get_all", {}, true)).filter(function(o){ return o.is_active!==false; }).map(function(o){ return {id:o._id, name:o.name}; });
   var sups = await allPages("bito_supplier_get_paging", {}, 200, null, null, true);
   var supName = {}; sups.forEach(function(s){ supName[s._id] = s.name; });
-  if(!$("rate").value) $("rate").placeholder = String(Math.round(rateMain));
-  REF = {usdId:usdC._id, mainId:mainC?mainC._id:null, toUSD:toUSD, rateMain:rateMain, supName:supName};
+  var ref = {t:Date.now(), usdId:usdC._id, mainId:mainC?mainC._id:null, toUSD:toUSD, rateMain:vm?vm.value:1, supName:supName, orgs:orgs};
+  await dbSet("meta/ref", ref); lsSet("ref", ref);
+  return ref;
+}
+async function ensureRef(force){
+  if(REF && !force) return REF;
+  var c = (await dbGet("meta/ref")) || lsGet("ref");
+  if(c && c.usdId && !force){
+    applyRef(c);
+    if(Date.now()-c.t > 12*3600e3) fetchRef().then(applyRef).catch(function(){});
+    return REF;
+  }
+  applyRef(await fetchRef());
+  return REF;
 }
 
-// Mahsulot → ta'minotchi (kartochkadan). Faqat kirimi topilmagan mahsulotlar uchun kerak; 3 kun saqlanadi.
+// ---------- mahsulot → ta'minotchi (faqat kirimi topilmagan mahsulotlar uchun, 3 kun saqlanadi) ----------
 async function loadProductSup(){
   var c = (await dbGet("meta/prodsup")) || lsGet("prodsup");
   if(c && c.m && Date.now()-c.t < 3*864e5) return c.m;
+  task("prod", "Mahsulotlar…", "run");
   var m = {};
-  var list = await allPages("bito_product_get_paging", {}, 50, function(d,t){ status("Mahsulotlar ro'yxati (3 kunda bir marta)…", "", d, t); });
+  var list = await allPages("bito_product_get_paging", {}, 50, function(d,t){ task("prod", "Mahsulotlar "+d+(t?"/"+t:""), "run"); });
   list.forEach(function(p){ if(p.supplier_ids && p.supplier_ids.length) m[p._id] = p.supplier_ids[0]; });
   var body = {t:Date.now(), m:m};
   await dbSet("meta/prodsup", body); lsSet("prodsup", body);
+  task("prod", "Mahsulotlar", "ok");
   return m;
 }
 
-// Kirimlar: har biri bir marta olinadi va bazada ixcham ko'rinishda saqlanadi
+// ---------- kirimlar ----------
 function compactPurchase(p){
   var f = REF.toUSD[p.currency_id || (p.currency && p.currency._id)];
   if(f==null) f = REF.rateMain ? 1/REF.rateMain : 0;
@@ -434,15 +532,14 @@ function legacyPurchase(id, upd){
   return {u:upd, s:c.s, n:c.n||"", d:c.d, it:(c.it||[]).map(function(x){ return Array.isArray(x) ? {p:x[0], q:x[1], c:x[2], e:x[3]} : x; })};
 }
 async function loadPurchases(){
+  task("pur", "Kirimlar…", "run");
   var known = {};
   if(db){
     try{ var snap = await db.collection("purch").limit(1000).get(); snap.docs.forEach(function(d){ known[d.id] = d.data(); }); }
     catch(e){ dbWarn = true; }
   }
   var hasKnown = Object.keys(known).length > 0;
-  // Yangi yoki o'zgargan kirimlargacha o'qiladi; butun sahifa tanish bo'lsa, to'xtaydi
-  var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 50,
-    function(d,t){ status("Kirim hujjatlari ro'yxati…", "", d, t); },
+  var list = await allPages("bito_purchase_get_paging", {sort:"-date"}, 50, null,
     function(page){ return hasKnown && page.every(function(p){ var k = known[p._id]; return p.state!=="done" ? !k : (k && k.u===(p.updated_at||"")); }); });
   var need = [];
   for(var i=0;i<list.length;i++){
@@ -454,8 +551,8 @@ async function loadPurchases(){
     need.push(p);
   }
   var done = 0;
-  if(need.length) status("Kirim hujjatlari tafsiloti…", "Yangi kirimlar yuklanmoqda. Har bir kirim bir marta olinadi va saqlanadi — to'xtab qolsa ham, keyingi safar davom etadi.", 0, need.length);
-  await pool(need, 2, async function(p){
+  if(need.length) task("pur", "Yangi kirimlar 0/"+need.length, "run");
+  await pool(need, 3, async function(p){
     for(var a=0; a<3; a++){
       try{
         var full = await call("bito_purchase_get_by_id", {id:p._id});
@@ -467,15 +564,25 @@ async function loadPurchases(){
         break;
       }catch(e){
         if(e && AUTHZ[e.code]) throw e;
-        if(a===2){ skipped.push(p.number || p._id); } else await sleep(1500*(a+1));
+        if(a===2){ skipped.push(p.number || p._id); } else await sleep(1200*(a+1));
       }
     }
-    done++; status("Kirim hujjatlari tafsiloti…", null, done, need.length);
+    done++; task("pur", "Yangi kirimlar "+done+"/"+need.length, "run");
   });
+  task("pur", "Kirimlar"+(need.length ? " (+"+need.length+")" : ""), "ok");
   return Object.keys(known).map(function(id){ return known[id]; });
 }
 
-// ---------- ta'minotchilarga chiqimlar (tranzaksiyalar) ----------
+// ---------- sotuv ----------
+async function loadSales(fromISO, toISO, org){
+  task("sale", "Sotuv…", "run");
+  var rows = await allPages("bito_report_sales_by_item_pagin", {from_date:fromISO, to_date:toISO, organization_ids: org?[org]:undefined}, 100,
+    function(d,t){ task("sale", "Sotuv "+d+(t?"/"+t:""), "run"); });
+  task("sale", "Sotuv ("+rows.length+" mahsulot)", "ok");
+  return rows;
+}
+
+// ---------- ta'minotchilarga chiqimlar ----------
 function monthKey(t){ var d = new Date(t + 5*3600e3); return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1); }
 function txDate(t){ return new Date(t.date || t.created_at).getTime(); }
 function payUSD(t, rate){
@@ -503,11 +610,11 @@ async function savePays(recs){
 async function loadMeta(){ var m = db ? await dbGet("meta/tx") : MEM.meta; return m && typeof m.hi==="number" && m.hi>0 ? m : null; }
 async function saveMeta(m){ MEM.meta = m; await dbSet("meta/tx", m || {reset:Date.now()}); }
 
-// Bito'dan faqat yetishmayotgan tranzaksiyalar o'qiladi: yangilari (tepadan) va davr boshigacha bo'lgan eski qismi
 async function syncPayments(fromT, rate){
   var TX = "bito_transaction_get_paging", IN = {sort:"-date"}, L = 20;
   var meta = await loadMeta();
   var newest = meta ? meta.hi : 0, oldest = meta ? meta.lo : Infinity, seen = 0;
+  task("pay", "To'lovlar…", "run");
   function handle(page){
     var recs = {};
     page.forEach(function(t){
@@ -517,142 +624,164 @@ async function syncPayments(fromT, rate){
       if(t.type==="expense" && t.to_supplier==="expense") recs[t._id] = payRecord(t, rate);
     });
     seen += page.length;
-    status("Chiqim tranzaksiyalari…", meta ? "Oxirgi tekshiruvdan keyingi yangi tranzaksiyalar o'qilmoqda." : "Birinchi marta: davr boshigacha bo'lgan tranzaksiyalar ko'rib chiqilmoqda. Bu bir marta bo'ladi.", 0, 0);
-    $("stCount").textContent = seen+" ta ko'rildi";
+    task("pay", (meta ? "Yangi tranzaksiyalar: " : "Tranzaksiyalar (bir martalik): ")+seen, "run");
     return recs;
   }
   function lastDate(page){ return txDate(page[page.length-1]); }
 
   if(!meta){
-    var total0 = null;
     await scan(TX, IN, 0, L, async function(page, off, total){
-      total0 = total;
       await savePays(handle(page));
       await saveMeta({hi:newest, lo:oldest, scanned:off, total:total});
       return lastDate(page) < fromT;
     });
-    return;
-  }
-  // 1) yangilari: oxirgi tekshiruvdan 3 kun oldingacha (tahrir qilinganlar ham yangilanadi)
-  var cutoff = meta.hi - 3*864e5, T = meta.total;
-  await scan(TX, IN, 0, L, async function(page, off, total){
-    T = total;
-    await savePays(handle(page));
-    return lastDate(page) < cutoff;
-  });
-  var scanned = meta.scanned + Math.max(0, (T||meta.total) - meta.total);
-  meta = {hi:newest, lo:Math.min(meta.lo, oldest), scanned:scanned, total:T||meta.total};
-  await saveMeta(meta);
-  // 2) eski qismi: davr boshi hali qamrab olinmagan bo'lsa, to'xtagan joydan davom etadi
-  if(fromT < meta.lo){
-    var start = Math.max(0, Math.floor((meta.scanned - L)/L)*L);
-    await scan(TX, IN, start, L, async function(page, off, total){
+  } else {
+    // 1) yangilari: oxirgi tekshiruvdan 3 kun oldingacha (tahrir qilinganlar ham yangilanadi)
+    var cutoff = meta.hi - 3*864e5, T = meta.total;
+    await scan(TX, IN, 0, L, async function(page, off, total){
+      T = total;
       await savePays(handle(page));
-      meta = {hi:Math.max(meta.hi, newest), lo:Math.min(meta.lo, oldest), scanned:off, total:total};
-      await saveMeta(meta);
-      return lastDate(page) < fromT;
+      return lastDate(page) < cutoff;
     });
+    var scanned = meta.scanned + Math.max(0, (T||meta.total) - meta.total);
+    meta = {hi:newest, lo:Math.min(meta.lo, oldest), scanned:scanned, total:T||meta.total};
+    await saveMeta(meta);
+    // 2) eski qismi: davr boshi hali qamrab olinmagan bo'lsa, to'xtagan joydan davom etadi
+    if(fromT < meta.lo){
+      var start = Math.max(0, Math.floor((meta.scanned - L)/L)*L);
+      await scan(TX, IN, start, L, async function(page, off, total){
+        await savePays(handle(page));
+        meta = {hi:Math.max(meta.hi, newest), lo:Math.min(meta.lo, oldest), scanned:off, total:total};
+        await saveMeta(meta);
+        return lastDate(page) < fromT;
+      });
+    }
   }
+  task("pay", "To'lovlar", "ok");
 }
 async function loadPays(fromT, toT){
-  var out = {}, d = new Date(fromT + 5*3600e3), end = monthKey(toT), guard = 0;
+  var out = {}, d = new Date(fromT + 5*3600e3), end = monthKey(toT), months = [];
   d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
-  for(;guard<120;guard++){
+  for(var g=0; g<120; g++){
     var m = d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1);
-    var doc = db ? await dbGet("pay/"+m) : null;
-    var items = (doc && doc.items) || MEM.pay[m] || {};
-    Object.keys(items).forEach(function(id){ out[id] = items[id]; });
+    months.push(m);
     if(m===end) break;
     d.setUTCMonth(d.getUTCMonth()+1);
   }
+  var docs = await Promise.all(months.map(function(m){ return db ? dbGet("pay/"+m) : null; }));
+  months.forEach(function(m, i){
+    var items = (docs[i] && docs[i].items) || MEM.pay[m] || {};
+    Object.keys(items).forEach(function(id){ out[id] = items[id]; });
+  });
   return out;
 }
 
+// ---------- hisob ----------
+function compute(purchases, sales, pays, prodSup, fromT, toT, org, rate){
+  var pm = {};
+  purchases.forEach(function(p){
+    if(new Date(p.d).getTime() > toT) return;
+    var s = p.s || "_none";
+    if(p.n && !REF.supName[s]) REF.supName[s] = p.n;
+    (p.it||[]).forEach(function(x){
+      var a = pm[x.p] || (pm[x.p] = {}); var b = a[s] || (a[s] = {q:0,g:0,e:0});
+      b.q += x.q; b.g += x.q*x.c; b.e += x.e;
+    });
+  });
+  var S = {};
+  function sup(id){ return S[id] || (S[id] = {id:id, name: id==="_none" ? "Noma'lum ta'minotchi" : (REF.supName[id]||"Ta'minotchi "+String(id).slice(-4)), sold:0, qx:0, bito:0, sales:0, qty:0, est:0, pays:[], paid:0, prods:{}}); }
+  sales.forEach(function(r){
+    var pid = r.product_id || r._id;
+    var nq = (+r.items_sold||0) - (+r.items_refunded||0);
+    var bitoUSD = (+r.cost||0)/rate, salesUSD = (+r.net_sales||0)/rate;
+    var src = pm[pid], tq = 0, k;
+    if(src){ for(k in src) tq += src[k].q; }
+    if(src && tq>0){
+      for(k in src){
+        var b = src[k], sh = b.q/tq, aq = nq*sh;
+        var o = sup(k), v = aq*(b.g/b.q), e = aq*(b.e/b.q);
+        o.sold += v; o.qx += e; o.bito += bitoUSD*sh; o.sales += salesUSD*sh; o.qty += aq;
+        var pr = o.prods[pid] || (o.prods[pid] = {name:r.product_name, qty:0, v:0, est:false}); pr.qty += aq; pr.v += v;
+      }
+    } else {
+      var o2 = sup((prodSup && prodSup[pid]) || "_none");
+      o2.sold += bitoUSD; o2.bito += bitoUSD; o2.sales += salesUSD; o2.qty += nq; o2.est += bitoUSD;
+      var pr2 = o2.prods[pid] || (o2.prods[pid] = {name:r.product_name, qty:0, v:0, est:true}); pr2.qty += nq; pr2.v += bitoUSD;
+    }
+  });
+  Object.keys(pays).forEach(function(id){
+    var p = pays[id], tt = new Date(p.d).getTime();
+    if(tt<fromT || tt>toT || p.st!=="done") return;
+    if(org && p.o!==org) return;
+    if(p.sn && !REF.supName[p.s]) REF.supName[p.s] = p.sn;
+    var o = sup(p.s);
+    if(o.name.indexOf("Ta'minotchi ")===0 && p.sn) o.name = p.sn;
+    o.paid += p.v;
+    o.pays.push({d:p.d, n:p.n, v:p.v, raw:p.raw, cur:p.cur, type:p.type});
+  });
+  return Object.keys(S).map(function(k){
+    var o = S[k];
+    o.prods = Object.keys(o.prods).map(function(id){ return o.prods[id]; }).sort(function(a,b){ return b.v-a.v; }).slice(0,80);
+    o.pays.sort(function(a,b){ return a.d<b.d ? 1 : -1; });
+    return o;
+  }).filter(function(o){ return Math.abs(o.sold)>0.5 || Math.abs(o.paid)>0.5; });
+}
+
+// ---------- ishga tushirish ----------
+var last = null, running = false;
+function repKey(from, to, org){ return "rep/"+from+"_"+to+"_"+(org||"all"); }
+
+async function showCached(){
+  var from = $("from").value, to = $("to").value, org = $("org").value;
+  var rep = (await dbGet(repKey(from, to, org))) || lsGet("rep:"+from+"_"+to+"_"+(org||"all"));
+  if(rep && rep.rows){ last = rep; render(); return rep; }
+  return null;
+}
+
 async function run(opts){
+  if(running) return;
   var from = $("from").value, to = $("to").value;
-  if(!from || !to || from>to){ status("Sanalarni tekshiring", "Boshlanish sanasi tugash sanasidan oldin bo'lishi kerak.", 0, 0, true); return; }
+  if(!from || !to || from>to){ alertBox("Sanalarni tekshiring", "Boshlanish sanasi tugash sanasidan oldin bo'lishi kerak."); return; }
   var org = $("org").value;
-  lsSet("filters", {from:from, to:to, org:org, rate:$("rate").value});
-  $("run").disabled = true; $("resync").disabled = true; truncatedSeen = false; skipped = []; dbWarn = false;
+  var pressed = document.querySelector('.seg button[aria-pressed="true"]');
+  lsSet("filters", {from:from, to:to, org:org, rate:$("rate").value, preset: pressed ? pressed.getAttribute("data-p") : null});
+  running = true; $("run").disabled = true; $("run").classList.add("spin"); $("resync").disabled = true;
+  truncatedSeen = false; skipped = []; dbWarn = false; TASKS = {}; alertBox(null);
   var t0 = Date.now();
+  var cached = await showCached();
+  setSync(cached ? "Saqlangan natija ("+ftime(cached.at)+"). Yangilanmoqda:" : "Hisoblanmoqda:");
   try{
-    if(!REF) await loadRef();
+    await ensureRef();
     var rate = +$("rate").value || REF.rateMain;
     var fromISO = from+"T00:00:00"+TZ, toISO = to+"T23:59:59"+TZ;
     var fromT = new Date(fromISO).getTime(), toT = new Date(toISO).getTime();
+    if(opts && opts.resync) await saveMeta(null);
 
-    if(opts && opts.resync){ await saveMeta(null); }
-
-    var purchases = await loadPurchases();
-
-    // mahsulot → ta'minotchi → {qty, goods$, extra$}
-    var pm = {};
-    purchases.forEach(function(p){
-      if(new Date(p.d).getTime() > toT) return;
-      var s = p.s || "_none";
-      if(p.n && !REF.supName[s]) REF.supName[s] = p.n;
-      (p.it||[]).forEach(function(x){
-        var a = pm[x.p] || (pm[x.p] = {}); var b = a[s] || (a[s] = {q:0,g:0,e:0});
-        b.q += x.q; b.g += x.q*x.c; b.e += x.e;
-      });
-    });
-
-    var sales = await allPages("bito_report_sales_by_item_pagin", {from_date:fromISO, to_date:toISO, organization_ids: org?[org]:undefined}, 100,
-      function(d,t){ status("Davrdagi sotuvlar…", "", d, t); });
-
-    var prodSup = null;
-    if(sales.some(function(r){ var s = pm[r.product_id || r._id]; return !s; })) prodSup = await loadProductSup();
-
-    await syncPayments(fromT, rate);
+    // uchta manba bir vaqtda o'qiladi
+    var res = await Promise.all([loadPurchases(), loadSales(fromISO, toISO, org), syncPayments(fromT, rate)]);
+    var purchases = res[0], sales = res[1];
+    var have = {}; purchases.forEach(function(p){ (p.it||[]).forEach(function(x){ have[x.p] = 1; }); });
+    var prodSup = sales.some(function(r){ return !have[r.product_id || r._id]; }) ? await loadProductSup() : null;
     var pays = await loadPays(fromT, toT);
 
-    var S = {};
-    function sup(id){ return S[id] || (S[id] = {id:id, name: id==="_none" ? "Noma'lum ta'minotchi" : (REF.supName[id]||"Ta'minotchi "+String(id).slice(-4)), sold:0, qx:0, bito:0, sales:0, qty:0, est:0, pays:[], paid:0, prods:{}}); }
-
-    sales.forEach(function(r){
-      var pid = r.product_id || r._id;
-      var nq = (+r.items_sold||0) - (+r.items_refunded||0);
-      var bitoUSD = (+r.cost||0)/rate, salesUSD = (+r.net_sales||0)/rate;
-      var src = pm[pid], tq = 0, k;
-      if(src){ for(k in src) tq += src[k].q; }
-      if(src && tq>0){
-        for(k in src){
-          var b = src[k], sh = b.q/tq, aq = nq*sh;
-          var o = sup(k), v = aq*(b.g/b.q), e = aq*(b.e/b.q);
-          o.sold += v; o.qx += e; o.bito += bitoUSD*sh; o.sales += salesUSD*sh; o.qty += aq;
-          var pr = o.prods[pid] || (o.prods[pid] = {name:r.product_name, qty:0, v:0, est:false}); pr.qty += aq; pr.v += v;
-        }
-      } else {
-        var o2 = sup((prodSup && prodSup[pid]) || "_none");
-        o2.sold += bitoUSD; o2.bito += bitoUSD; o2.sales += salesUSD; o2.qty += nq; o2.est += bitoUSD;
-        var pr2 = o2.prods[pid] || (o2.prods[pid] = {name:r.product_name, qty:0, v:0, est:true}); pr2.qty += nq; pr2.v += bitoUSD;
-      }
-    });
-
-    Object.keys(pays).forEach(function(id){
-      var p = pays[id], tt = new Date(p.d).getTime();
-      if(tt<fromT || tt>toT || p.st!=="done") return;
-      if(org && p.o!==org) return;
-      if(p.sn && !REF.supName[p.s]) REF.supName[p.s] = p.sn;
-      var o = sup(p.s);
-      if(o.name.indexOf("Ta'minotchi ")===0 && p.sn) o.name = p.sn;
-      o.paid += p.v;
-      o.pays.push(p);
-    });
-
-    var rows = Object.keys(S).map(function(k){ return S[k]; }).filter(function(o){ return Math.abs(o.sold)>0.5 || Math.abs(o.paid)>0.5; });
-    last = {rows:rows, from:from, to:to, rate:rate, orgName: org ? $("org").selectedOptions[0].textContent : "Barcha filiallar"};
+    var rows = compute(purchases, sales, pays, prodSup, fromT, toT, org, rate);
+    last = {rows:rows, from:from, to:to, rate:rate, org:org, orgName: org ? $("org").selectedOptions[0].textContent : "Barcha filiallar", at:Date.now()};
     render();
-    var warn = (skipped.length ? " "+skipped.length+" ta kirim hujjati yuklanmadi ("+skipped.slice(0,5).join(", ")+(skipped.length>5?"…":"")+"), ularning mahsulotlari Bito tannarxi bilan hisoblandi. Qayta \"Hisoblash\" bosilsa, yana urinib ko'riladi." : "")
-      + (truncatedSeen ? " Diqqat: Bito ba'zi javoblarni qisqartirdi, natija to'liq bo'lmasligi mumkin." : "")
-      + (!db ? " Saqlash bazasi ochilmadi: keyingi safar ma'lumotlar qaytadan olinadi." : dbWarn ? " Ba'zi ma'lumotlarni bazaga saqlab bo'lmadi." : "");
-    status("Tayyor", "Kurs: 1$ = "+nf0.format(rate)+" so'm. "+rows.length+" ta ta'minotchi. "+Math.round((Date.now()-t0)/1000)+" soniyada hisoblandi."+warn, 1, 1);
-    $("stCount").textContent = "";
+    var slim = Object.assign({}, last, {rows: rows.map(function(o){ return Object.assign({}, o, {prods:o.prods.slice(0,30)}); })});
+    dbSet(repKey(from, to, org), slim);
+    lsSet("rep:"+from+"_"+to+"_"+(org||"all"), slim);
+    TASKS = {};
+    var warn = (skipped.length ? " "+skipped.length+" ta kirim yuklanmadi, ularning mahsulotlari Bito tannarxi bilan hisoblandi." : "")
+      + (truncatedSeen ? " Bito ba'zi javoblarni qisqartirdi." : "")
+      + (!db ? " Saqlash bazasi ochilmadi — keyingi safar ma'lumot qaytadan olinadi." : dbWarn ? " Ba'zi ma'lumotlar bazaga saqlanmadi." : "");
+    setSync("Yangilandi "+ftime(last.at)+" · "+((Date.now()-t0)/1000).toFixed(1)+" s · 1$ = "+nf0.format(rate)+" so'm."+warn);
   }catch(e){
-    var t = errText(e), at = step;
-    status(t[0], "Bosqich: "+(at||"boshlanish")+". "+t[1]+(e && e.code ? " (kod: "+e.code+")" : "")+" Yuklangan qism saqlandi — \"Hisoblash\"ni qayta bosing, to'xtagan joydan davom etadi.", 0, 0, true);
+    var t = errText(e);
+    Object.keys(TASKS).forEach(function(k){ if(TASKS[k].state==="run") TASKS[k].state = "err"; });
+    setSync(cached ? "Ko'rsatilgan natija "+ftime(cached.at)+" holatida." : "");
+    alertBox(t[0], t[1]+(e && e.code ? " (kod: "+e.code+")" : ""));
   }finally{
-    $("run").disabled = false; $("resync").disabled = false;
+    running = false; $("run").disabled = false; $("run").classList.remove("spin"); $("resync").disabled = false;
   }
 }
 
@@ -664,30 +793,38 @@ function level(o){
   if(c>=0.5) return ["mid","Qisman"];
   return ["low","Kam to'langan"];
 }
-function covBar(o, big){
-  if(o.sold<=0.5) return '<div class="cov none'+(big?' big':'')+'"><span class="pct" style="color:var(--muted);text-shadow:none">faqat to\'lov</span></div>';
+function bar(o, big){
+  if(o.sold<=0.5) return '<div class="bar none'+(big?' big':'')+'" role="img" aria-label="Sotuv yo\'q"></div>';
   var c = o.paid/o.sold, w = Math.max(0, Math.min(1, c))*100;
-  return '<div class="cov'+(big?' big':'')+'" role="img" aria-label="Qoplama '+pct(c)+'"><div class="fill'+(w>=100?' full':'')+'" style="width:'+w+'%"></div><span class="pct">'+pct(c)+'</span></div>';
+  return '<div class="bar'+(big?' big':'')+'" role="img" aria-label="Qoplama '+pct(c)+'"><div class="f'+(w>=100?' full':'')+'" style="width:'+w+'%"></div>'+(c>1?'<i class="over"></i>':'')+(big?'<span class="t">'+pct(c)+'</span>':'')+'</div>';
 }
+var CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 function render(){
   var R = last.rows;
-  var tS = 0, tP = 0; R.forEach(function(o){ tS += o.sold; tP += o.paid; });
-  $("hero").hidden = false; $("main").hidden = false;
-  $("kSold").textContent = usd(tS); $("kPaid").textContent = usd(tP);
-  $("kCov").textContent = tS>0 ? pct(tP/tS) : "—";
+  var tS = 0, tP = 0, nDebt = 0; R.forEach(function(o){ tS += o.sold; tP += o.paid; if(o.sold-o.paid>0.5) nDebt++; });
+  var cov = tS>0 ? tP/tS : NaN;
+  $("kSold").textContent = usd(tS);
+  $("kSoldS").textContent = R.filter(function(o){ return o.sold>0.5; }).length+" ta ta'minotchi tovari sotildi";
+  $("kPaid").textContent = usd(tP);
+  $("kPaidS").textContent = R.reduce(function(a,o){ return a+o.pays.length; }, 0)+" ta to'lov";
+  $("kCov").textContent = pct(cov);
+  $("kCovBox").classList.toggle("good", cov>=1);
+  $("kCovS").textContent = cov>=1 ? "Sotilganidan ko'proq berilgan" : "Sotilgan tovarning to'langan ulushi";
   $("kRest").textContent = usd(Math.max(0, tS-tP));
+  $("kRestBox").classList.toggle("hl", tS-tP>0.5);
+  $("kRestS").textContent = nDebt+" ta ta'minotchida qarz qolgan";
   var w = tS>0 ? Math.min(1, tP/tS)*100 : 0;
   $("heroFill").style.width = w+"%"; $("heroFill").classList.toggle("full", w>=100);
-  $("heroPct").textContent = tS>0 ? pct(tP/tS) : "";
-  $("period").textContent = fdate(last.from+"T00:00")+" – "+fdate(last.to+"T00:00")+" · "+last.orgName;
+  $("heroPct").textContent = tS>0 ? pct(cov) : "";
+  $("period").textContent = fdate(last.from+"T12:00:00")+" – "+fdate(last.to+"T12:00:00")+" · "+(last.orgName||"Barcha filiallar");
   $("cQ").textContent = R.length;
   $("cS").textContent = R.filter(function(o){ return o.sold>0.5; }).length;
   $("cC").textContent = R.reduce(function(a,o){ return a+o.pays.length; }, 0);
   renderQ(); renderS(); renderC();
 }
 function renderQ(){
-  var q = $("qSearch").value.trim().toLowerCase(), s = $("qSort").value;
-  var R = last.rows.filter(function(o){ return !q || o.name.toLowerCase().indexOf(q)>=0; });
+  var q = $("qSearch").value.trim().toLowerCase(), s = $("qSort").value, onlyDebt = $("qDebt").checked;
+  var R = last.rows.filter(function(o){ return (!q || o.name.toLowerCase().indexOf(q)>=0) && (!onlyDebt || o.sold-o.paid>0.5); });
   var cov = function(o){ return o.sold>0.5 ? o.paid/o.sold : Infinity; };
   var cmp = {
     rest:function(a,b){ return (b.sold-b.paid)-(a.sold-a.paid); },
@@ -695,61 +832,63 @@ function renderQ(){
     sold:function(a,b){ return b.sold-a.sold; }, paid:function(a,b){ return b.paid-a.paid; },
     name:function(a,b){ return a.name.localeCompare(b.name); }
   }[s];
-  R.sort(cmp);
-  if(!R.length){ $("qRows").innerHTML = '<div class="empty">Bu davrda ta\'minotchilar bo\'yicha sotuv yoki chiqim topilmadi.</div>'; return; }
+  R = R.slice().sort(cmp);
+  if(!R.length){ $("qRows").innerHTML = '<div class="empty">'+(last.rows.length ? "Filtrga mos ta'minotchi topilmadi." : "Bu davrda ta'minotchilar bo'yicha sotuv yoki chiqim topilmadi.")+'</div>'; return; }
   $("qRows").innerHTML = R.map(function(o){
     var L = level(o), rest = o.sold-o.paid;
-    var restHtml = o.sold<=0.5 ? '<span class="rest over">'+usd(o.paid)+' berilgan</span>'
-      : rest>0.5 ? '<span class="rest debt">'+usd(rest)+' qoplanmagan</span>'
-      : '<span class="rest over">+'+usd(-rest)+' ortiqcha</span>';
-    var prods = Object.keys(o.prods).map(function(k){ return o.prods[k]; }).sort(function(a,b){ return b.v-a.v; });
-    var pays = o.pays.slice().sort(function(a,b){ return new Date(b.d)-new Date(a.d); });
-    return '<details class="srow"><summary>'
-      + '<div style="min-width:0"><div class="sname">'+esc(o.name)+'</div><div class="smeta"><span>Sotildi: <b class="num">'+usd(o.sold)+'</b></span><span>Berildi: <b class="num">'+usd(o.paid)+'</b></span>'+(o.est>0.5?'<span>taxminiy: '+usd(o.est)+'</span>':'')+'</div></div>'
-      + covBar(o)
-      + '<div class="sfig"><span class="pill '+L[0]+'">'+L[1]+'</span>'+restHtml+'</div>'
-      + '</summary><div class="detail">'
-      + '<div><h3>Sotilgan tovarlar ('+prods.length+')</h3><div class="tbl-wrap"><table><thead><tr><th>Mahsulot</th><th class="r">Soni</th><th class="r">QXsiz tannarx</th></tr></thead><tbody>'
-      + (prods.length ? prods.slice(0,60).map(function(p){ return '<tr><td class="wrap">'+esc(p.name)+(p.est?' <span class="muted">(taxminiy)</span>':'')+'</td><td class="r">'+qty(p.qty)+'</td><td class="r">'+usd(p.v)+'</td></tr>'; }).join("") : '<tr><td colspan="3" class="muted">Sotuv yo\'q</td></tr>')
-      + (prods.length>60 ? '<tr><td colspan="3" class="muted">… yana '+(prods.length-60)+' ta</td></tr>' : '')
-      + '</tbody></table></div></div>'
-      + '<div><h3>Chiqimlar ('+pays.length+')</h3><div class="tbl-wrap"><table><thead><tr><th>Sana</th><th>Turi</th><th class="r">Summa</th><th class="r">$</th></tr></thead><tbody>'
-      + (pays.length ? pays.map(function(p){ return '<tr><td>'+fdate(p.d)+'</td><td class="wrap">'+esc(p.type)+'</td><td class="r">'+nf0.format(p.raw)+' '+esc(p.cur)+'</td><td class="r">'+usd(p.v)+'</td></tr>'; }).join("") : '<tr><td colspan="4" class="muted">Bu davrda chiqim qilinmagan</td></tr>')
-      + '</tbody></table></div></div>'
-      + '</div></details>';
+    var restCell = o.sold<=0.5 ? '<div><small>Holat</small><span class="over">faqat to\'lov</span></div>'
+      : rest>0.5 ? '<div><small>Qoldi</small><span class="debt">'+usd(rest)+'</span></div>'
+      : '<div><small>Ortiqcha</small><span class="over">+'+usd(-rest)+'</span></div>';
+    return '<details class="row"><summary>'
+      + '<div class="nm"><b>'+esc(o.name)+'</b><span class="pill '+L[0]+'">'+L[1]+'</span></div>'
+      + '<div class="mid-col"><div class="pc"><span>Qoplama</span><b>'+(o.sold>0.5 ? pct(o.paid/o.sold) : "—")+'</b></div>'+bar(o)+'</div>'
+      + '<div class="figs"><div><small>Sotildi</small><span>'+usd(o.sold)+'</span></div><div><small>Berildi</small><span>'+usd(o.paid)+'</span></div>'+restCell+'</div>'
+      + CHEV + '</summary><div class="detail" data-id="'+esc(o.id)+'"></div></details>';
   }).join("");
 }
+// tafsilot faqat ochilganda chiziladi — uzun ro'yxat tez ochiladi
+$("qRows").addEventListener("toggle", function(e){
+  var d = e.target; if(!d.open) return;
+  var box = d.querySelector(".detail"); if(!box || box.childElementCount) return;
+  var o = last.rows.find(function(r){ return r.id===box.getAttribute("data-id"); }); if(!o) return;
+  var prods = o.prods, pays = o.pays;
+  box.innerHTML = '<div><h3>Sotilgan tovarlar · '+prods.length+(prods.length>=80?"+":"")+'</h3><div class="tw"><table><thead><tr><th>Mahsulot</th><th class="r">Soni</th><th class="r">QXsiz tannarx</th></tr></thead><tbody>'
+    + (prods.length ? prods.map(function(p){ return '<tr><td class="w">'+esc(p.name)+(p.est?' <span class="muted">· taxminiy</span>':'')+'</td><td class="r">'+qty(p.qty)+'</td><td class="r">'+usd(p.v)+'</td></tr>'; }).join("") : '<tr><td colspan="3" class="muted">Bu davrda sotuv yo\'q</td></tr>')
+    + '</tbody></table></div></div>'
+    + '<div><h3>To\'lovlar · '+pays.length+'</h3><div class="tw"><table><thead><tr><th>Sana</th><th>Turi</th><th class="r">Summa</th><th class="r">$</th></tr></thead><tbody>'
+    + (pays.length ? pays.map(function(p){ return '<tr><td>'+fdate(p.d)+'</td><td class="w">'+esc(p.type)+'</td><td class="r">'+nf0.format(p.raw)+' '+esc(p.cur)+'</td><td class="r">'+usd(p.v)+'</td></tr>'; }).join("") : '<tr><td colspan="4" class="muted">Bu davrda to\'lov qilinmagan</td></tr>')
+    + '</tbody></table></div></div>';
+}, true);
 
 var sortS = {k:"sold", d:-1}, sortC = {k:"paid", d:-1};
 function sortRows(R, st){ return R.sort(function(a,b){ var x=a[st.k], y=b[st.k]; return (typeof x==="string" ? x.localeCompare(y) : x-y)*st.d; }); }
 function head(cols, st){ return '<thead><tr>'+cols.map(function(c){ return '<th data-k="'+c[0]+'" class="'+(c[2]||"")+'">'+c[1]+(st.k===c[0]?(st.d<0?" ↓":" ↑"):"")+'</th>'; }).join("")+'</tr></thead>'; }
 function renderS(){
-  var R = last.rows.filter(function(o){ return o.sold>0.5; }).map(function(o){ return {name:o.name, qty:o.qty, sold:o.sold, qx:o.qx, withqx:o.sold+o.qx, bito:o.bito, sales:o.sales, margin:o.sales-o.sold, est:o.est}; });
+  var R = last.rows.filter(function(o){ return o.sold>0.5; }).map(function(o){ return {name:o.name, qty:o.qty, sold:o.sold, qx:o.qx, withqx:o.sold+o.qx, sales:o.sales, margin:o.sales-o.sold, est:o.est}; });
   sortRows(R, sortS);
-  var cols = [["name","Ta'minotchi"],["qty","Sotildi (dona)","r"],["sold","QXsiz tannarx","r"],["qx","QX","r"],["withqx","QX bilan","r"],["sales","Sotuv summasi","r"],["margin","Farq","r"]];
+  var cols = [["name","Ta'minotchi"],["qty","Sotildi, dona","r"],["sold","QXsiz tannarx","r"],["qx","QX","r"],["withqx","QX bilan","r"],["sales","Sotuv summasi","r"],["margin","Farq","r"]];
   var t = {qty:0,sold:0,qx:0,withqx:0,sales:0,margin:0}; R.forEach(function(r){ for(var k in t) t[k]+=r[k]; });
   $("sTbl").innerHTML = head(cols, sortS) + '<tbody>' + (R.length ? R.map(function(r){
-    return '<tr><td class="wrap">'+esc(r.name)+(r.est>0.5?' <span class="muted">(taxminiy qism '+usd(r.est)+')</span>':'')+'</td><td class="r">'+qty(r.qty)+'</td><td class="r"><b>'+usd(r.sold)+'</b></td><td class="r">'+usd(r.qx)+'</td><td class="r">'+usd(r.withqx)+'</td><td class="r">'+usd(r.sales)+'</td><td class="r">'+usd(r.margin)+'</td></tr>';
+    return '<tr><td class="w">'+esc(r.name)+(r.est>0.5?' <span class="muted">· taxminiy '+usd(r.est)+'</span>':'')+'</td><td class="r">'+qty(r.qty)+'</td><td class="r"><b>'+usd(r.sold)+'</b></td><td class="r">'+usd(r.qx)+'</td><td class="r">'+usd(r.withqx)+'</td><td class="r">'+usd(r.sales)+'</td><td class="r">'+usd(r.margin)+'</td></tr>';
   }).join("") : '<tr><td colspan="7" class="empty">Bu davrda sotuv yo\'q</td></tr>') + '</tbody>'
   + '<tfoot><tr><td>Jami</td><td class="r">'+qty(t.qty)+'</td><td class="r">'+usd(t.sold)+'</td><td class="r">'+usd(t.qx)+'</td><td class="r">'+usd(t.withqx)+'</td><td class="r">'+usd(t.sales)+'</td><td class="r">'+usd(t.margin)+'</td></tr></tfoot>';
 }
 function renderC(){
   var R = last.rows.filter(function(o){ return o.pays.length; }).map(function(o){
-    var lastD = o.pays.reduce(function(a,p){ return p.d>a ? p.d : a; }, "");
-    return {name:o.name, n:o.pays.length, paid:o.paid, avg:o.paid/o.pays.length, lastD:lastD, share:0};
+    return {name:o.name, n:o.pays.length, paid:o.paid, avg:o.paid/o.pays.length, lastD:o.pays[0] ? o.pays[0].d : "", share:0};
   });
   var tot = R.reduce(function(a,r){ return a+r.paid; }, 0);
   R.forEach(function(r){ r.share = tot ? r.paid/tot : 0; });
   sortRows(R, sortC);
-  var cols = [["name","Ta'minotchi"],["n","To'lovlar soni","r"],["paid","Jami chiqim","r"],["avg","O'rtacha to'lov","r"],["share","Ulushi","r"],["lastD","Oxirgi to'lov","r"]];
+  var cols = [["name","Ta'minotchi"],["n","To'lovlar","r"],["paid","Jami berilgan","r"],["avg","O'rtacha to'lov","r"],["share","Ulushi","r"],["lastD","Oxirgi to'lov","r"]];
   $("cTbl").innerHTML = head(cols, sortC) + '<tbody>' + (R.length ? R.map(function(r){
-    return '<tr><td class="wrap">'+esc(r.name)+'</td><td class="r">'+r.n+'</td><td class="r"><b>'+usd(r.paid)+'</b></td><td class="r">'+usd(r.avg)+'</td><td class="r">'+pct(r.share)+'</td><td class="r">'+fdate(r.lastD)+'</td></tr>';
-  }).join("") : '<tr><td colspan="6" class="empty">Bu davrda ta\'minotchilarga chiqim qilinmagan</td></tr>') + '</tbody>'
-  + '<tfoot><tr><td>Jami</td><td class="r">'+R.reduce(function(a,r){ return a+r.n; },0)+'</td><td class="r">'+usd(tot)+'</td><td class="r"></td><td class="r">100%</td><td class="r"></td></tr></tfoot>';
+    return '<tr><td class="w">'+esc(r.name)+'</td><td class="r">'+r.n+'</td><td class="r"><b>'+usd(r.paid)+'</b></td><td class="r">'+usd(r.avg)+'</td><td class="r">'+pct(r.share)+'</td><td class="r">'+fdate(r.lastD)+'</td></tr>';
+  }).join("") : '<tr><td colspan="6" class="empty">Bu davrda ta\'minotchilarga to\'lov qilinmagan</td></tr>') + '</tbody>'
+  + '<tfoot><tr><td>Jami</td><td class="r">'+R.reduce(function(a,r){ return a+r.n; },0)+'</td><td class="r">'+usd(tot)+'</td><td class="r"></td><td class="r">'+(R.length?"100%":"")+'</td><td class="r"></td></tr></tfoot>';
 }
 function bindSort(id, st, fn){
   $(id).addEventListener("click", function(e){
-    var th = e.target.closest("th[data-k]"); if(!th) return;
+    var th = e.target.closest("th[data-k]"); if(!th || !last) return;
     var k = th.getAttribute("data-k");
     if(st.k===k) st.d = -st.d; else { st.k = k; st.d = k==="name" ? 1 : -1; }
     fn();
@@ -758,11 +897,13 @@ function bindSort(id, st, fn){
 bindSort("sTbl", sortS, renderS); bindSort("cTbl", sortC, renderC);
 $("qSearch").addEventListener("input", function(){ if(last) renderQ(); });
 $("qSort").addEventListener("change", function(){ if(last) renderQ(); });
+$("qDebt").addEventListener("change", function(){ if(last) renderQ(); });
 
-// ---------- tablar ----------
+// ---------- bo'limlar ----------
 function showTab(name){
   ["qoplama","sotuv","chiqim"].forEach(function(n){
-    $("p-"+n).hidden = n!==name; $("t-"+n).setAttribute("aria-selected", n===name ? "true" : "false");
+    var p = $("p-"+n); p.hidden = n!==name; p.style.display = n===name ? "flex" : "";
+    $("t-"+n).setAttribute("aria-selected", n===name ? "true" : "false");
   });
   try{ history.replaceState(null, "", "#"+name); }catch(e){}
 }
@@ -770,18 +911,24 @@ document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click
 var h = (location.hash||"").slice(1); if(["qoplama","sotuv","chiqim"].indexOf(h)>=0) showTab(h);
 
 // ---------- filtrlar ----------
-document.querySelectorAll(".chip").forEach(function(c){ c.addEventListener("click", function(){ setPreset(c.getAttribute("data-p")); run(); }); });
+document.querySelectorAll(".seg button").forEach(function(b){ b.addEventListener("click", function(){
+  var r = presetRange(b.getAttribute("data-p")); $("from").value = r[0]; $("to").value = r[1]; markPreset(); run();
+}); });
+["from","to"].forEach(function(id){ $(id).addEventListener("change", markPreset); });
+$("org").addEventListener("change", function(){ run(); });
 $("filters").addEventListener("submit", function(e){ e.preventDefault(); run(); });
 $("resync").addEventListener("click", function(){ run({resync:true}); });
 
-// ---------- ishga tushirish ----------
+// ---------- start ----------
 if(!window.claude || !window.claude.use){
-  status("Bito ulanmagan", "Bu sahifa jonli Bito ma'lumotlari bilan faqat claude.ai ichida ishlaydi.", 0, 0, true);
+  setSync(""); alertBox("Bito ulanmagan", "Bu sahifa jonli Bito ma'lumotlari bilan faqat claude.ai ichida ishlaydi.");
   return;
 }
+// saqlangan ma'lumotnomalar bo'lsa, filial ro'yxati darhol to'ladi
+var lref = lsGet("ref"); if(lref && lref.usdId) applyRef(lref);
 Promise.all([window.claude.use("mcp"), window.claude.use("db").catch(function(){ return null; })]).then(function(ns){
   db = ns[1];
-  if(!ns[0]){ status("Bu ko'rinishda Bito ulanmaydi", "Sahifani claude.ai ichida oching va Bito connectoriga ruxsat bering.", 0, 0, true); return; }
+  if(!ns[0]){ setSync(""); alertBox("Bu ko'rinishda Bito ulanmaydi", "Sahifani claude.ai ichida oching va Bito connectoriga ruxsat bering."); return; }
   mcp = ns[0]; run();
 });
 })();
